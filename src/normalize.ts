@@ -225,6 +225,16 @@ function normalizeCovenSkill(raw: unknown): CovenSkill {
   };
 }
 
+export type AckResult = { ok: boolean; accepted: boolean };
+
+/** Ack shape for input/kill. `accepted` defaults to `ok` when upstream omits it. */
+export function normalizeAck(raw: unknown): AckResult {
+  const record = asRecord(raw, "invalid_ack");
+  const ok = record["ok"] === true;
+  const accepted = record["accepted"] === undefined ? ok : record["accepted"] === true;
+  return { ok, accepted };
+}
+
 export function normalizeHarnesses(raw: unknown): ListHarnessesResult {
   const kind = "invalid_harnesses_payload";
   const record = asRecord(raw, kind);

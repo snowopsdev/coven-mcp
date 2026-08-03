@@ -71,7 +71,15 @@ send({ jsonrpc: "2.0", method: "notifications/initialized" });
 send({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
 const list = await nextResponse();
 const names = (list.result?.tools ?? []).map((t) => t.name).sort();
-const expected = ["coven_health", "coven_list_harnesses", "coven_list_sessions"];
+const expected = [
+  "coven_get_session",
+  "coven_health",
+  "coven_kill_session",
+  "coven_list_harnesses",
+  "coven_list_sessions",
+  "coven_send_input",
+  "coven_start_session",
+];
 if (JSON.stringify(names) !== JSON.stringify(expected)) fail("unexpected tool list", names);
 
 send({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "coven_health", arguments: {} } });
@@ -84,6 +92,24 @@ if (body.reachable !== false || body.error?.code !== "DAEMON_UNAVAILABLE") {
 
 child.stdin.end();
 const exitCode = await new Promise((resolve) => child.once("exit", resolve));
-clearTimeout(timeout);
 if (exitCode !== 0 && exitCode !== null) fail(`entry point exited with ${exitCode}`);
-console.log("SMOKE OK: discovery stable with daemon down, stdout pure, clean shutdown");
+
+// FR-23: a misconfigured allowlist entry must abort startup, naming the
+// entry position on stderr without echoing its value.
+const bad = spawn(process.execPath, [entry], {
+  env: { ...process.env, COVEN_SOCKET: "/nonexistent/no.sock", SCRY_ALLOWED_ROOTS: "relative/path" },
+  stdio: ["pipe", "ignore", "pipe"],
+});
+let badErr = "";
+bad.stderr.on("data", (c) => (badErr += c.toString("utf8")));
+const badExit = await new Promise((resolve) => bad.once("exit", resolve));
+clearTimeout(timeout);
+if (badExit !== 1) {
+  console.error("SMOKE FAIL: misconfigured allowlist should exit 1, got", badExit);
+  process.exit(1);
+}
+if (!badErr.includes("entry #1") || badErr.includes("relative/path")) {
+  console.error("SMOKE FAIL: misconfig stderr should name the position, not the value:", badErr);
+  process.exit(1);
+}
+console.log("SMOKE OK: discovery stable with daemon down, stdout pure, clean shutdown, misconfig fails fast");

@@ -1,12 +1,22 @@
 #!/usr/bin/env node
 import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { AllowlistConfigError, parseAllowedRoots } from "./allowlist.js";
 import { resolveSocketPath } from "./socket-path.js";
 import { createScryServer } from "./server.js";
 
 async function main(): Promise<void> {
   const socketPath = resolveSocketPath(process.env, homedir());
-  const server = createScryServer({ socketPath });
+  let allowedRoots: string[];
+  try {
+    allowedRoots = parseAllowedRoots(process.env["SCRY_ALLOWED_ROOTS"]);
+  } catch (err) {
+    // FR-23: a misconfigured allowlist is loud, never partially honored.
+    const message = err instanceof AllowlistConfigError ? err.message : "invalid SCRY_ALLOWED_ROOTS";
+    process.stderr.write(`scry: ${message}\n`);
+    process.exit(1);
+  }
+  const server = createScryServer({ socketPath, allowedRoots });
   const transport = new StdioServerTransport();
 
   const shutdown = (): void => {

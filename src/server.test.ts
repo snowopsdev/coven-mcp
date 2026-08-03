@@ -56,12 +56,13 @@ function resultJson(result: unknown): unknown {
 }
 
 describe("scry MCP server — Checkpoint A", () => {
-  test("lists the three read-only tools with the daemon stopped, all marked read-only", async () => {
+  test("lists the read tools with the daemon stopped, all marked read-only", async () => {
     const c = await connectClient("/nonexistent/scry/no.sock");
     const { tools } = await c.listTools();
-    const names = tools.map((t) => t.name).sort();
-    expect(names).toEqual(["coven_health", "coven_list_harnesses", "coven_list_sessions"]);
-    for (const tool of tools) {
+    const names = tools.map((t) => t.name);
+    const readTools = ["coven_health", "coven_list_harnesses", "coven_list_sessions"];
+    for (const name of readTools) expect(names).toContain(name);
+    for (const tool of tools.filter((t) => readTools.includes(t.name))) {
       expect(tool.annotations?.readOnlyHint).toBe(true);
       expect(tool.description).toBeTruthy();
     }
