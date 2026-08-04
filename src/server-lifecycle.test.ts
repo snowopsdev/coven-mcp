@@ -113,6 +113,7 @@ describe("lifecycle tools", () => {
       "coven_health",
       "coven_kill_session",
       "coven_list_harnesses",
+      "coven_list_memory",
       "coven_list_sessions",
       "coven_read_output",
       "coven_send_input",

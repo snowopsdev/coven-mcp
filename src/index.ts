@@ -16,7 +16,12 @@ async function main(): Promise<void> {
     process.stderr.write(`scry: ${message}\n`);
     process.exit(1);
   }
-  const server = createScryServer({ socketPath, allowedRoots });
+  const server = createScryServer({
+    socketPath,
+    allowedRoots,
+    // FR-22: boolean env vars recognize only the exact literal "true".
+    includeMemoryExcerpts: process.env["SCRY_INCLUDE_MEMORY_EXCERPTS"] === "true",
+  });
   const transport = new StdioServerTransport();
 
   const shutdown = (): void => {

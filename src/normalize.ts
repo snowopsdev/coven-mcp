@@ -225,6 +225,82 @@ function normalizeCovenSkill(raw: unknown): CovenSkill {
   };
 }
 
+export type MemoryEntry = {
+  id: string;
+  familiarId: string;
+  title: string;
+  path: string;
+  updatedAt: string;
+  updatedAtIso: string;
+  excerpt: string;
+  excerptRedacted: boolean;
+  source: { kind: string; label: string };
+  privacyClassification?: string | null;
+  revealRequired?: boolean | null;
+  verificationState: string;
+};
+
+export type MemoryListResult = { entries: MemoryEntry[] };
+
+export type MemoryPolicy = { includeExcerpts: boolean };
+
+/**
+ * FR-9 excerpt policy: excerpts are blanked unless explicitly opted in, and
+ * even then revealRequired or any non-null classification other than "public"
+ * forces redaction. `excerptRedacted` is true exactly when scry blanked a
+ * non-empty daemon-provided excerpt.
+ */
+function normalizeMemoryEntry(raw: unknown, policy: MemoryPolicy): MemoryEntry {
+  const kind = "invalid_memory_entry";
+  const record = asRecord(raw, kind);
+  const sourceRaw = record["source"];
+  const source =
+    typeof sourceRaw === "object" && sourceRaw !== null
+      ? (sourceRaw as Record<string, unknown>)
+      : {};
+  const daemonExcerpt = typeof record["excerpt"] === "string" ? record["excerpt"] : "";
+  const revealRequired = record["reveal_required"] === true ? true : record["reveal_required"] === false ? false : null;
+  const classification =
+    typeof record["privacy_classification"] === "string" ? record["privacy_classification"] : null;
+  const disclosable =
+    policy.includeExcerpts &&
+    revealRequired !== true &&
+    (classification === null || classification === "public");
+  const excerpt = disclosable ? daemonExcerpt : "";
+  return {
+    id: requireString(record, "id", kind),
+    familiarId: typeof record["familiar_id"] === "string" ? record["familiar_id"] : "",
+    title: typeof record["title"] === "string" ? record["title"] : "",
+    path: typeof record["path"] === "string" ? record["path"] : "",
+    updatedAt: typeof record["updated_at"] === "string" ? record["updated_at"] : "",
+    updatedAtIso: typeof record["updated_at_iso"] === "string" ? record["updated_at_iso"] : "",
+    excerpt,
+    excerptRedacted: daemonExcerpt !== "" && excerpt === "",
+    source: {
+      kind: typeof source["kind"] === "string" ? source["kind"] : "",
+      label: typeof source["label"] === "string" ? source["label"] : "",
+    },
+    privacyClassification: classification,
+    revealRequired,
+    verificationState:
+      typeof record["verification_state"] === "string" ? record["verification_state"] : "",
+  };
+}
+
+export function normalizeMemoryList(raw: unknown, policy: MemoryPolicy): MemoryListResult {
+  // Live-verified Aug 4: the route returns a bare array; tolerate an
+  // `entries` envelope as an additive upstream change (FR-34).
+  const list = Array.isArray(raw)
+    ? raw
+    : (() => {
+        const record = asRecord(raw, "invalid_memory_list");
+        const entries = record["entries"];
+        if (!Array.isArray(entries)) throw schemaError("invalid_memory_list");
+        return entries;
+      })();
+  return { entries: list.map((entry) => normalizeMemoryEntry(entry, policy)) };
+}
+
 export type AckResult = { ok: boolean; accepted: boolean };
 
 /** Ack shape for input/kill. `accepted` defaults to `ok` when upstream omits it. */

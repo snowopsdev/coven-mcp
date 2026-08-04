@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { normalizeHarnesses, normalizeListSessions, normalizeSessionRecord } from "./normalize.js";
+import {
+  normalizeHarnesses,
+  normalizeListSessions,
+  normalizeMemoryList,
+  normalizeSessionRecord,
+} from "./normalize.js";
 import { ScryError } from "./errors.js";
 
 /** Shape captured live from coven 0.0.34 on Aug 3, 2026 (pinned SHA in PLAN.md). */
@@ -106,6 +111,84 @@ describe("normalizeListSessions", () => {
     const result = normalizeListSessions({ sessions: [], next_cursor: null });
     expect(result.nextCursor).toBeNull();
     expect(result.hasMore).toBe(false);
+  });
+});
+
+/** Upstream shape assumed snake_case per FR-32; the live list was empty on Aug 4. */
+function upstreamMemoryEntry(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: "mem-1",
+    familiar_id: "frost",
+    title: "Project conventions",
+    path: "memory/project-conventions.md",
+    updated_at: "1754300000",
+    updated_at_iso: "2026-08-04T10:00:00Z",
+    excerpt: "First paragraph of the memory file.",
+    source: { kind: "familiar", label: "frost" },
+    privacy_classification: null,
+    reveal_required: false,
+    verification_state: "verified",
+    ...overrides,
+  };
+}
+
+describe("normalizeMemoryList", () => {
+  test("wraps the bare upstream array and blanks excerpts by default, marking them redacted", () => {
+    const result = normalizeMemoryList([upstreamMemoryEntry()], { includeExcerpts: false });
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0]).toMatchObject({
+      id: "mem-1",
+      familiarId: "frost",
+      title: "Project conventions",
+      path: "memory/project-conventions.md",
+      updatedAtIso: "2026-08-04T10:00:00Z",
+      excerpt: "",
+      excerptRedacted: true,
+      source: { kind: "familiar", label: "frost" },
+      verificationState: "verified",
+    });
+  });
+
+  test("a daemon-empty excerpt is not marked redacted, even in default mode", () => {
+    const result = normalizeMemoryList([upstreamMemoryEntry({ excerpt: "" })], {
+      includeExcerpts: false,
+    });
+    expect(result.entries[0]).toMatchObject({ excerpt: "", excerptRedacted: false });
+  });
+
+  test("opt-in forwards excerpts only for public or unclassified entries", () => {
+    const result = normalizeMemoryList(
+      [
+        upstreamMemoryEntry({ id: "open", privacy_classification: null }),
+        upstreamMemoryEntry({ id: "public", privacy_classification: "public" }),
+        upstreamMemoryEntry({ id: "secret", privacy_classification: "private" }),
+        upstreamMemoryEntry({ id: "reveal", reveal_required: true }),
+      ],
+      { includeExcerpts: true },
+    );
+    const byId = new Map(result.entries.map((e) => [e.id, e]));
+    expect(byId.get("open")).toMatchObject({
+      excerpt: "First paragraph of the memory file.",
+      excerptRedacted: false,
+    });
+    expect(byId.get("public")).toMatchObject({ excerptRedacted: false });
+    expect(byId.get("secret")).toMatchObject({ excerpt: "", excerptRedacted: true });
+    expect(byId.get("reveal")).toMatchObject({ excerpt: "", excerptRedacted: true });
+  });
+
+  test("accepts an entries envelope as an additive upstream change", () => {
+    const result = normalizeMemoryList(
+      { entries: [upstreamMemoryEntry()] },
+      { includeExcerpts: false },
+    );
+    expect(result.entries).toHaveLength(1);
+  });
+
+  test("rejects a record missing its id with a bounded UPSTREAM_ERROR", () => {
+    const { id: _id, ...withoutId } = upstreamMemoryEntry();
+    expect(() => normalizeMemoryList([withoutId], { includeExcerpts: false })).toThrowError(
+      ScryError,
+    );
   });
 });
 
