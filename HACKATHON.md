@@ -1,19 +1,35 @@
 # Hackathon Submission — `coven-mcp`
 
-**Event:** OpenCoven Beta Hackathon 2026
+**Event:** OpenCoven Beta Hackathon 2026 (build window Aug 2 23:30 EDT – Aug 8 00:00 EDT)
 
-> Placeholders below are filled at freeze time (see `PLAN.md` §8). The freeze preflight runs `COVEN_MCP_RELEASE_CHECK=true npm run verify`, which fails while any placeholder remains.
+> Two placeholders below are filled at freeze time (see `PLAN.md` §8). The freeze preflight runs `COVEN_MCP_RELEASE_CHECK=true npm run verify`, which fails while either remains, so this file cannot be left half-complete.
 
 | | |
 | --- | --- |
 | Project | `coven-mcp` — MCP server bridging the Coven daemon to stdio MCP clients |
 | One-sentence summary | Exposes Coven sessions, output, harness capabilities, and memory listing as MCP tools so any stdio-capable MCP client can see and drive Coven without leaving the client |
 | Team | snow (solo) |
-| Repo URL | <https://github.com/snowopsdev/coven-mcp> (currently **private** — must be public before submitting) |
-| Freeze tag | `july-hackathon-2026-final` (confirmed against the official rules and submission guide — July-named despite the August event and August-named submission repo) |
+| Repo URL | <https://github.com/snowopsdev/coven-mcp> (**must be public before submitting**) |
+| Freeze tag | `july-hackathon-2026-final` |
 | Final commit SHA | TODO at freeze |
 | Demo link | TODO at freeze |
 | License | MIT, unmodified — greenfield, no prior work reused |
+
+**Naming note for reviewers:** the tag is *July*-named while the event runs in August and the submission repository is `opencoven-beta-august-hackathon-2026`. This is intentional and matches the rules verbatim — both the [submission guide](https://hackathon.opencoven.ai/docs/submission-guide.html) and the [official rules](https://hackathon.opencoven.ai/docs/official-rules.html) specify `july-hackathon-2026-final`, and the rules give the full `git tag -a` command using it.
+
+## How to evaluate this in five minutes
+
+No Coven install, credentials, network access, or running daemon required:
+
+```sh
+git clone https://github.com/snowopsdev/coven-mcp.git && cd coven-mcp
+npm ci
+npm run verify
+```
+
+That runs typecheck, lint, 137 unit and contract tests, a production build, a raw JSON-RPC stdio smoke test, a package-content check, and a documentation check — roughly four seconds end to end. Contract tests exercise the real protocol against a fake daemon bound to a temporary Unix socket, so the same code paths a live daemon would hit are covered.
+
+With a Coven daemon available, `README.md` § *Run* has a copy-pasteable JSON-RPC pipeline that talks to the real daemon without any MCP client, and § *Demo* has the full six-step live workflow.
 
 ## What it does
 
@@ -41,6 +57,8 @@ Pinned upstream baselines (verified Aug 3–4, 2026):
 | `OpenCoven/coven-reach` | `07f5c9d5e4863c1a9a187a070e413d51110ad610` | Novelty comparison (different tool domain) |
 | `OpenCoven/coven-codeflow` | `5fd9df1e5133c72a1373ff01f7b6416dfe30534b` | Novelty comparison (MCP client, not server) |
 
+`coven-reach` is an MCP server for filesystem and web operations; `coven-codeflow` is an MCP *client*. Neither exposes the daemon itself, which is the gap this fills.
+
 ### Upstream behaviors discovered while building
 
 Verified against the live daemon rather than assumed from docs. Each is documented in the README and encoded in contract tests:
@@ -62,11 +80,21 @@ npm ci
 npm run verify
 ```
 
-Runs typecheck, Biome lint, 137 unit and contract tests, production build, a raw JSON-RPC stdio smoke test, a package-content check, and a documentation check. Clean-clone wall time: **~4 seconds**.
+| Stage | What it proves |
+| --- | --- |
+| typecheck | Strict TypeScript, no emit errors |
+| lint | Biome lint and format across `src`, `test`, `scripts` |
+| test | 137 unit and contract tests |
+| build | Production build produces a runnable entry point |
+| stdio smoke | Raw JSON-RPC against the built binary; stdout purity, stable discovery with the daemon down, non-zero exit on a misconfigured allowlist |
+| package check | Tarball contents, shebang, `bin`, and `engines` |
+| docs check | Every section the submission guide requires, present, non-empty, and in the guide's order |
 
 Contract tests bind a real HTTP server to a temporary Unix socket rather than mocking `node:http`, and cover the acceptance matrix: array/envelope pagination, malformed payloads, cursor regression, split ANSI/CR state across resume tokens, size and page limits, symlink and prefix escapes, cross-root session writes, structured error mappings, and stdout purity.
 
 Verified separately against a live `coven 0.0.34` daemon: health and capability handshake, harness and session listing, the full `start → get → input → kill` round trip ending in a terminal status, out-of-root denial, ANSI-free output reads with resume, and an honest empty memory list.
+
+The `coven_read_output` stack was additionally put through an adversarial multi-agent review; nine confirmed defects were fixed, the most serious being a state-growth bug that would have made carriage-return-heavy output (any progress bar) permanently unreadable. Each fix landed with a regression test.
 
 ## Security impact
 
@@ -82,11 +110,19 @@ The README documents the full threat model, including the explicit limits: the a
 
 ## Bonus claims
 
-None claimed. Opportunistic upstream documentation or bug PRs are tracked in `PLAN.md` §7 and will be listed here only if merged before scores lock.
+None claimed. Opportunistic upstream documentation or bug PRs are tracked in `PLAN.md` §7 and will be listed here only if merged before scores lock, since a claim earns nothing merely by being submitted.
 
 ## Declarations
 
-- **Greenfield:** all code in this repository was written during the event.
-- **License:** unmodified MIT (year and holder only).
+- **Greenfield:** all code in this repository was written during the event build window. Prior work was limited to `PLAN.md` and `PRD.md` — design notes containing no implementation.
+- **License:** unmodified MIT, only year and holder populated, no added restrictions.
 - **DCO:** every commit is signed off; AI-assisted commits carry `Co-Authored-By` trailers.
-- **Scope honesty:** token streaming, Windows, semantic memory search, hub/scheduler/travel routes, `POST /actions`, and claims are all out of scope and documented as such with reasons.
+- **Scope honesty:** token streaming, Windows, semantic memory search, hub/scheduler/travel routes, `POST /actions`, and claims are all out of scope and documented as such with reasons in the README.
+
+## Outstanding before freeze
+
+Tracked in full in `PLAN.md` §8; run `node scripts/freeze-preflight.mjs` to check mechanically.
+
+- Make the repository public — judges cannot clone a private repo, and the preflight fails while it is.
+- Record the demo and fill both placeholder rows above.
+- Diff `LICENSE` and this file against `participant/LICENSE_TEMPLATE.txt` and `participant/HACKATHON_TEMPLATE.md` in the (private) event repository. Both are hand-written here and match the rules text, but neither has been compared against the actual templates.
