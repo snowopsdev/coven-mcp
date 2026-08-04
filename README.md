@@ -41,7 +41,11 @@ TODO: Block 2 (example `mcpServers` JSON for Claude Desktop / Cursor).
 | `SCRY_ALLOWED_ROOTS` | Colon-separated absolute project roots allowed for write tools; unset/empty = read-only mode |
 | `SCRY_INCLUDE_MEMORY_EXCERPTS` | Exactly `true` to forward bounded memory excerpts; anything else disables |
 
-TODO: complete semantics per PRD §6.4 in Block 6.
+Socket discovery order: `COVEN_SOCKET` (literal path) → `$COVEN_HOME/coven.sock` → `~/.coven/coven.sock`.
+
+`SCRY_ALLOWED_ROOTS` entries must be absolute, existing directories. If **any** entry is invalid, `scry` exits at startup with a message naming the entry's position (never its value) — a misconfigured allowlist is never partially honored. Roots are canonicalized (symlinks resolved) before use, and containment is checked per path component, so `/work/app2` is never authorized by an allowlist entry of `/work/app`.
+
+Boolean `SCRY_*` variables recognize only the exact literal `true`. `1`, `TRUE`, and `yes` are all treated as disabled.
 
 ## Tool reference
 
@@ -55,7 +59,21 @@ TODO: revalidate before freeze.
 
 ## Security and privacy
 
-TODO: Block 6 — full threat model (allowlist authorization boundary, disclosure surface, prompt-injection caveat, residual same-user authority).
+**Trust model.** The Coven daemon has no authentication: trust is same-user access to a local Unix socket. `scry` therefore inherits your full same-user authority, and anything it exposes to an LLM can, in principle, drive PTY processes on your machine. `scry`'s job is to narrow that authority before an LLM touches it.
+
+**Write authorization.** The three write tools (`coven_start_session`, `coven_send_input`, `coven_kill_session`) are gated by `SCRY_ALLOWED_ROOTS`. Unset or empty means read-only mode — deny by default. `coven_start_session` canonicalizes the requested `projectRoot` and `cwd` (resolving symlinks) and requires both to land inside an allowed root, with `cwd` inside `projectRoot`. `coven_send_input` and `coven_kill_session` never trust a caller-supplied root: they fetch the daemon's own session record and authorize its canonical `project_root`. Missing paths, symlink escapes, `..` traversal, dead directories, and lookup failures all fail closed.
+
+**The allowlist is authorization, not a sandbox.** A harness started inside an allowed root still runs with your full OS authority — it can read your home directory, use your credentials, and make network calls. The allowlist controls where sessions may be *started and driven from this MCP surface*; it does not confine what a running harness can do.
+
+**Disclosure surface (read tools).** Read tools work without an allowlist and can disclose to the connected MCP client: session titles and absolute project paths, sanitized session output, harness manifest paths (which may be absolute), and memory titles/relative paths. Memory *excerpts* are blank unless you set `SCRY_INCLUDE_MEMORY_EXCERPTS=true`, and entries flagged `revealRequired` or classified anything other than `public` stay redacted even then.
+
+**Prompt injection.** Session output, titles, and memory excerpts are untrusted content that may contain instructions aimed at the LLM reading them. `scry` sanitizes encoding (ANSI escapes, carriage returns, control characters) — it cannot sanitize meaning. Tool results are data, not instructions; `scry` never embeds returned content in its own tool descriptions or error messages.
+
+**Resume tokens.** `coven_read_output` continuation tokens are HMAC-signed with a random per-process secret, bound to their session id, and size-capped. They are integrity-protected but **not encrypted** — the payload includes un-emitted output state — so treat tokens as session output: never log or share them. They intentionally die when the server restarts (see Troubleshooting for recovery).
+
+**Logging.** `scry` never logs prompts, input data, session output, memory excerpts, environment values, resume tokens, or raw daemon bodies. Stdout carries only MCP JSON-RPC; stderr carries metadata-only diagnostics (a startup misconfiguration message names an allowlist entry's *position*, never its value).
+
+**Residual risk.** Anyone with same-user access to your machine can talk to the daemon directly, bypassing `scry` entirely. `scry` narrows what the *connected LLM* can do; it does not harden the daemon itself.
 
 ## Verification and tests
 
@@ -76,7 +94,17 @@ TODO: finalize wording in Block 8.
 
 ## Troubleshooting
 
-TODO: Block 8 (daemon not running, incompatible version, resume-token recovery after server restart via `afterSeq` = last `lastSeq`).
+**`DAEMON_UNAVAILABLE`** — the daemon socket is absent or unreachable. Start it with `coven daemon start`, then retry; `scry` recovers without a restart (health is re-checked on every call, cached for at most 1.5 s).
+
+**`INCOMPATIBLE_DAEMON`** — the daemon speaks something other than `coven.daemon.v1`. Check `coven --version` against the pinned compatibility section above.
+
+**`INVALID_RESUME_TOKEN` after an MCP client restart** — resume tokens are signed with a per-process secret and die when `scry` restarts (MCP clients restart stdio servers on config changes and relaunches). Recovery: call `coven_read_output` again with `afterSeq` set to the last `lastSeq` you observed — every result includes `lastSeq`. You lose only the un-emitted partial-line state, never full lines already returned.
+
+**`ROOT_NOT_ALLOWED`** — the operation's project root is not inside `SCRY_ALLOWED_ROOTS` (or the allowlist is unset, which means read-only mode). Set the variable to a colon-separated list of absolute project directories and reconnect the MCP server.
+
+**`scry` exits immediately at startup** — an `SCRY_ALLOWED_ROOTS` entry is invalid (relative, missing, or not a directory). The stderr message names the entry position; fix that entry and restart.
+
+TODO: Block 8 — client-specific configuration issues.
 
 ## Hackathon disclosure and upstream use
 

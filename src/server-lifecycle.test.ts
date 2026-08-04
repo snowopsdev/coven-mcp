@@ -1,12 +1,12 @@
-import { afterEach, describe, expect, test } from "vitest";
 import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createScryServer } from "./server.js";
+import { afterEach, describe, expect, test } from "vitest";
+import { type FakeDaemon, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { parseAllowedRoots } from "./allowlist.js";
-import { startFakeDaemon, type FakeDaemon } from "../test/helpers/fake-daemon.js";
+import { createScryServer } from "./server.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -257,7 +257,10 @@ describe("lifecycle tools", () => {
       "POST /api/v1/sessions/s-1/kill": { status: 200, payload: { ok: true } },
     });
     const c = await connectClient(d.socketPath, [allowed]);
-    const result = await c.callTool({ name: "coven_kill_session", arguments: { sessionId: "s-1" } });
+    const result = await c.callTool({
+      name: "coven_kill_session",
+      arguments: { sessionId: "s-1" },
+    });
     expect(result.isError ?? false).toBe(false);
     expect(resultJson(result)).toEqual({ ok: true, accepted: true });
   });
@@ -272,7 +275,10 @@ describe("lifecycle tools", () => {
       "POST /api/v1/sessions/s-1/kill": { status: 200, payload: { ok: true } },
     });
     const c = await connectClient(d.socketPath, [allowed]);
-    const result = await c.callTool({ name: "coven_kill_session", arguments: { sessionId: "s-1" } });
+    const result = await c.callTool({
+      name: "coven_kill_session",
+      arguments: { sessionId: "s-1" },
+    });
     expect(result.isError).toBe(true);
     expect(resultJson(result)).toMatchObject({ code: "ROOT_NOT_ALLOWED" });
   });
@@ -287,5 +293,21 @@ describe("lifecycle tools", () => {
     });
     expect(result.isError).toBe(true);
     expect(resultJson(result)).toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  test("dot-dot traversal that resolves outside the allowlist is denied after canonicalization", async () => {
+    const { allowed, sibling } = allowedTree();
+    const { daemon: d } = await routedDaemon({});
+    const c = await connectClient(d.socketPath, [allowed]);
+    const traversal = `${allowed}/../app2`; // literal dot-dot, not pre-normalized by join()
+    expect(traversal.startsWith(allowed)).toBe(true); // string-prefix check would wrongly allow it
+    const result = await c.callTool({
+      name: "coven_start_session",
+      arguments: { projectRoot: traversal, harness: "claude", prompt: "hi" },
+    });
+    expect(result.isError).toBe(true);
+    expect(resultJson(result)).toMatchObject({ code: "ROOT_NOT_ALLOWED" });
+    // Sanity: the same resolved directory is genuinely a real, existing path.
+    expect(sibling.endsWith("app2")).toBe(true);
   });
 });
