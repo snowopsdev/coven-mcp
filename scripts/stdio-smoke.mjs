@@ -40,7 +40,7 @@ child.stdout.on("data", (chunk) => {
 });
 
 function send(frame) {
-  child.stdin.write(JSON.stringify(frame) + "\n");
+  child.stdin.write(`${JSON.stringify(frame)}\n`);
 }
 
 function nextResponse() {
@@ -48,7 +48,11 @@ function nextResponse() {
 }
 
 function fail(message, extra) {
-  console.error("SMOKE FAIL:", message, extra === undefined ? "" : JSON.stringify(extra).slice(0, 300));
+  console.error(
+    "SMOKE FAIL:",
+    message,
+    extra === undefined ? "" : JSON.stringify(extra).slice(0, 300),
+  );
   child.kill("SIGKILL");
   process.exit(1);
 }
@@ -84,7 +88,12 @@ const expected = [
 ];
 if (JSON.stringify(names) !== JSON.stringify(expected)) fail("unexpected tool list", names);
 
-send({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "coven_health", arguments: {} } });
+send({
+  jsonrpc: "2.0",
+  id: 3,
+  method: "tools/call",
+  params: { name: "coven_health", arguments: {} },
+});
 const health = await nextResponse();
 if (health.result?.isError) fail("coven_health returned isError", health);
 const body = JSON.parse(health.result?.content?.[0]?.text ?? "{}");
@@ -99,7 +108,11 @@ if (exitCode !== 0 && exitCode !== null) fail(`entry point exited with ${exitCod
 // FR-23: a misconfigured allowlist entry must abort startup, naming the
 // entry position on stderr without echoing its value.
 const bad = spawn(process.execPath, [entry], {
-  env: { ...process.env, COVEN_SOCKET: "/nonexistent/no.sock", SCRY_ALLOWED_ROOTS: "relative/path" },
+  env: {
+    ...process.env,
+    COVEN_SOCKET: "/nonexistent/no.sock",
+    SCRY_ALLOWED_ROOTS: "relative/path",
+  },
   stdio: ["pipe", "ignore", "pipe"],
 });
 let badErr = "";
@@ -114,4 +127,6 @@ if (!badErr.includes("entry #1") || badErr.includes("relative/path")) {
   console.error("SMOKE FAIL: misconfig stderr should name the position, not the value:", badErr);
   process.exit(1);
 }
-console.log("SMOKE OK: discovery stable with daemon down, stdout pure, clean shutdown, misconfig fails fast");
+console.log(
+  "SMOKE OK: discovery stable with daemon down, stdout pure, clean shutdown, misconfig fails fast",
+);

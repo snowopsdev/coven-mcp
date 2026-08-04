@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { afterEach, describe, expect, test } from "vitest";
+import { type FakeDaemon, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { createScryServer } from "./server.js";
-import { startFakeDaemon, type FakeDaemon } from "../test/helpers/fake-daemon.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -48,8 +48,16 @@ describe("coven_read_output tool", () => {
       res.end(
         JSON.stringify({
           events: [
-            { seq: 1, kind: "output", payload_json: JSON.stringify({ data: "\u001b[32mhi\u001b[0m\n" }) },
-            { seq: 2, kind: "exit", payload_json: JSON.stringify({ exitCode: 0, status: "completed" }) },
+            {
+              seq: 1,
+              kind: "output",
+              payload_json: JSON.stringify({ data: "\u001b[32mhi\u001b[0m\n" }),
+            },
+            {
+              seq: 2,
+              kind: "exit",
+              payload_json: JSON.stringify({ exitCode: 0, status: "completed" }),
+            },
           ],
           nextCursor: { afterSeq: 2 },
           hasMore: false,
@@ -109,7 +117,7 @@ describe("coven_read_output tool", () => {
 
   test("an invalid resume token surfaces as INVALID_RESUME_TOKEN", async () => {
     daemon = await startFakeDaemon();
-    daemon.setHandler((req, res) => {
+    daemon.setHandler((_req, res) => {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify(GOOD_HEALTH));
     });
@@ -135,6 +143,43 @@ describe("coven_read_output tool", () => {
     });
     expect(result.isError).toBe(true);
     expect(resultJson(result)).toMatchObject({ code: "INVALID_RESUME_TOKEN" });
+  });
+
+  test("concurrent calls keep isolated cursors, buffers, and results (NFR-8)", async () => {
+    daemon = await startFakeDaemon();
+    daemon.setHandler((req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      if (req.url === "/api/v1/health") {
+        res.end(JSON.stringify(GOOD_HEALTH));
+        return;
+      }
+      const which = req.url?.includes("/sessions/s-a/") ? "a" : "b";
+      res.end(
+        JSON.stringify({
+          events: [
+            {
+              seq: 1,
+              kind: "output",
+              payload_json: JSON.stringify({ data: `stream-${which}\n` }),
+            },
+            {
+              seq: 2,
+              kind: "exit",
+              payload_json: JSON.stringify({ exitCode: 0, status: "completed" }),
+            },
+          ],
+          nextCursor: { afterSeq: 2 },
+          hasMore: false,
+        }),
+      );
+    });
+    const c = await connectClient(daemon.socketPath);
+    const [ra, rb] = await Promise.all([
+      c.callTool({ name: "coven_read_output", arguments: { sessionId: "s-a", timeoutMs: 1000 } }),
+      c.callTool({ name: "coven_read_output", arguments: { sessionId: "s-b", timeoutMs: 1000 } }),
+    ]);
+    expect(resultJson(ra)).toMatchObject({ text: "stream-a\n", complete: true });
+    expect(resultJson(rb)).toMatchObject({ text: "stream-b\n", complete: true });
   });
 
   test("requires the events capability", async () => {

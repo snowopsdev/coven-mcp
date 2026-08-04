@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
+import { ScryError } from "./errors.js";
 import {
   normalizeHarnesses,
   normalizeListSessions,
   normalizeMemoryList,
   normalizeSessionRecord,
 } from "./normalize.js";
-import { ScryError } from "./errors.js";
 
 /** Shape captured live from coven 0.0.34 on Aug 3, 2026 (pinned SHA in PLAN.md). */
 const UPSTREAM_SESSION = {

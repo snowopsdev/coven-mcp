@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
 import { mkdirSync, mkdtempSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { describe, expect, test } from "vitest";
 import {
   AllowlistConfigError,
   authorizeProjectRoot,
@@ -45,7 +45,9 @@ describe("parseAllowedRoots", () => {
 
   test("a missing directory fails fast instead of being dropped", () => {
     const { base } = tempTree();
-    expect(() => parseAllowedRoots(join(base, "does-not-exist"))).toThrowError(AllowlistConfigError);
+    expect(() => parseAllowedRoots(join(base, "does-not-exist"))).toThrowError(
+      AllowlistConfigError,
+    );
   });
 });
 
@@ -81,15 +83,19 @@ describe("authorizeProjectRoot", () => {
   test("denies a sibling directory that shares the allowed root as a string prefix", () => {
     const { allowed, outside } = tempTree();
     const roots = parseAllowedRoots(allowed);
-    expect(() => authorizeProjectRoot(roots, outside, "coven_start_session")).toThrowError(ScryError);
+    expect(() => authorizeProjectRoot(roots, outside, "coven_start_session")).toThrowError(
+      ScryError,
+    );
   });
 
   test("denies a symlink that escapes the allowed root", () => {
     const { base, allowed } = tempTree();
-    const escape = join(allowed, "escape");
-    symlinkSync(join(base, "work", "app2"), escape);
+    const escapeLink = join(allowed, "escape");
+    symlinkSync(join(base, "work", "app2"), escapeLink);
     const roots = parseAllowedRoots(allowed);
-    expect(() => authorizeProjectRoot(roots, escape, "coven_start_session")).toThrowError(ScryError);
+    expect(() => authorizeProjectRoot(roots, escapeLink, "coven_start_session")).toThrowError(
+      ScryError,
+    );
   });
 
   test("denies a missing path (fail closed) without echoing it", () => {

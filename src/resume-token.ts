@@ -89,7 +89,10 @@ export function createTokenCodec(secret: Buffer = randomBytes(32)): TokenCodec {
         throw invalid("bad_cursor");
       }
       const pendingRawB64 = record["pendingRawB64"];
-      if (typeof pendingRawB64 !== "string" || !(pendingRawB64 === "" || B64URL_RE.test(pendingRawB64))) {
+      if (
+        typeof pendingRawB64 !== "string" ||
+        !(pendingRawB64 === "" || B64URL_RE.test(pendingRawB64))
+      ) {
         throw invalid("malformed");
       }
       const pendingBytes = Buffer.from(pendingRawB64, "base64url");

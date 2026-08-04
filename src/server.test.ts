@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { afterEach, describe, expect, test } from "vitest";
+import { type FakeDaemon, jsonHandler, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { createScryServer } from "./server.js";
-import { jsonHandler, startFakeDaemon, type FakeDaemon } from "../test/helpers/fake-daemon.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -93,7 +93,9 @@ describe("scry MCP server — Checkpoint A", () => {
   });
 
   test("coven_health reports an incompatible daemon as reachable without erroring (FR-2)", async () => {
-    daemon = await startFakeDaemon(jsonHandler(200, { ...GOOD_HEALTH, apiVersion: "coven.daemon.v2" }));
+    daemon = await startFakeDaemon(
+      jsonHandler(200, { ...GOOD_HEALTH, apiVersion: "coven.daemon.v2" }),
+    );
     const c = await connectClient(daemon.socketPath);
     const result = await c.callTool({ name: "coven_health", arguments: {} });
     expect(result.isError ?? false).toBe(false);

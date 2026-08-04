@@ -18,10 +18,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
     "test": "vitest run",
-    "verify": "npm run typecheck && npm test && npm run build && node scripts/stdio-smoke.mjs"
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build && node scripts/stdio-smoke.mjs && node scripts/check-package.mjs && node scripts/check-docs.mjs"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.7",
     "@types/node": "^26.1.2",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"

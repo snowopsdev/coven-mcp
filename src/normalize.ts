@@ -84,7 +84,9 @@ export type ListHarnessesResult = {
 };
 
 function schemaError(kind: string): ScryError {
-  return new ScryError("UPSTREAM_ERROR", "Daemon response has an unexpected shape", false, { kind });
+  return new ScryError("UPSTREAM_ERROR", "Daemon response has an unexpected shape", false, {
+    kind,
+  });
 }
 
 function asRecord(value: unknown, kind: string): Record<string, unknown> {
@@ -208,7 +210,8 @@ function normalizeHarnessSummary(raw: unknown): HarnessSummary {
 function normalizeCovenSkill(raw: unknown): CovenSkill {
   const kind = "invalid_coven_skill";
   const record = asRecord(raw, kind);
-  const num = (key: string): number => (typeof record[key] === "number" ? (record[key] as number) : 0);
+  const num = (key: string): number =>
+    typeof record[key] === "number" ? (record[key] as number) : 0;
   return {
     id: requireString(record, "id", kind),
     name: typeof record["name"] === "string" ? record["name"] : "",
@@ -259,7 +262,8 @@ function normalizeMemoryEntry(raw: unknown, policy: MemoryPolicy): MemoryEntry {
       ? (sourceRaw as Record<string, unknown>)
       : {};
   const daemonExcerpt = typeof record["excerpt"] === "string" ? record["excerpt"] : "";
-  const revealRequired = record["reveal_required"] === true ? true : record["reveal_required"] === false ? false : null;
+  const revealRequired =
+    record["reveal_required"] === true ? true : record["reveal_required"] === false ? false : null;
   const classification =
     typeof record["privacy_classification"] === "string" ? record["privacy_classification"] : null;
   const disclosable =

@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
 import { createHmac, randomBytes } from "node:crypto";
-import { createTokenCodec, MAX_PENDING_RAW_BYTES, MAX_TOKEN_BYTES } from "./resume-token.js";
+import { describe, expect, test } from "vitest";
 import { ScryError } from "./errors.js";
+import { createTokenCodec, MAX_PENDING_RAW_BYTES, MAX_TOKEN_BYTES } from "./resume-token.js";
 
 const SESSION = "sess-1234";
 

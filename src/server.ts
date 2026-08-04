@@ -1,11 +1,11 @@
+import { isAbsolute } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { isAbsolute } from "node:path";
 import { z } from "zod";
 import { authorizeProjectRoot } from "./allowlist.js";
 import { covenRequest } from "./daemon-client.js";
 import { ScryError } from "./errors.js";
-import { createHealthGate, normalizeHealth, type HealthGate } from "./health-gate.js";
+import { createHealthGate, type HealthGate, normalizeHealth } from "./health-gate.js";
 import {
   normalizeAck,
   normalizeHarnesses,
@@ -14,7 +14,7 @@ import {
   normalizeSessionRecord,
   type SessionRecord,
 } from "./normalize.js";
-import { readOutput, EVENTS_PAGE_SIZE } from "./read-output.js";
+import { EVENTS_PAGE_SIZE, readOutput } from "./read-output.js";
 import { createTokenCodec } from "./resume-token.js";
 
 export type ScryServerConfig = {
@@ -160,7 +160,10 @@ export function createScryServer(config: ScryServerConfig): McpServer {
       inputSchema: z.object({
         limit: z.number().int().optional().describe("Page size, 1-1000 (default 100)"),
         cursor: z.string().optional().describe("Opaque pagination cursor from a previous call"),
-        includeArchived: z.boolean().optional().describe("Include archived sessions (default false)"),
+        includeArchived: z
+          .boolean()
+          .optional()
+          .describe("Include archived sessions (default false)"),
       }),
     },
     async (args): Promise<CallToolResult> => {
@@ -243,7 +246,9 @@ export function createScryServer(config: ScryServerConfig): McpServer {
         "a sandbox: the launched harness keeps the user's full same-user OS authority.",
       annotations: { readOnlyHint: false },
       inputSchema: z.object({
-        projectRoot: z.string().describe("Absolute project root; must be inside SCRY_ALLOWED_ROOTS"),
+        projectRoot: z
+          .string()
+          .describe("Absolute project root; must be inside SCRY_ALLOWED_ROOTS"),
         cwd: z.string().optional().describe("Absolute working directory inside projectRoot"),
         harness: z.string().describe("Harness id, e.g. claude or codex"),
         prompt: z.string().describe("Initial prompt for the session (1 byte - 1 MiB)"),
@@ -344,7 +349,9 @@ export function createScryServer(config: ScryServerConfig): McpServer {
           method: "GET",
           path: "/api/v1/memory",
         });
-        return ok(normalizeMemoryList(raw, { includeExcerpts: config.includeMemoryExcerpts === true }));
+        return ok(
+          normalizeMemoryList(raw, { includeExcerpts: config.includeMemoryExcerpts === true }),
+        );
       } catch (err) {
         return toolError(err);
       }
@@ -370,10 +377,25 @@ export function createScryServer(config: ScryServerConfig): McpServer {
       annotations: { readOnlyHint: true },
       inputSchema: z.object({
         sessionId: z.string().describe("Session id, 1-256 characters from [A-Za-z0-9._:-]"),
-        afterSeq: z.number().int().optional().describe("Resume after this event sequence (exclusive)"),
-        resumeToken: z.string().optional().describe("Opaque token from a previous call; mutually exclusive with afterSeq"),
-        timeoutMs: z.number().int().optional().describe("Polling deadline, 0-120000 ms (default 30000)"),
-        maxBytes: z.number().int().optional().describe("Sanitized-text budget, 64 KiB - 1 MiB (default 1 MiB)"),
+        afterSeq: z
+          .number()
+          .int()
+          .optional()
+          .describe("Resume after this event sequence (exclusive)"),
+        resumeToken: z
+          .string()
+          .optional()
+          .describe("Opaque token from a previous call; mutually exclusive with afterSeq"),
+        timeoutMs: z
+          .number()
+          .int()
+          .optional()
+          .describe("Polling deadline, 0-120000 ms (default 30000)"),
+        maxBytes: z
+          .number()
+          .int()
+          .optional()
+          .describe("Sanitized-text budget, 64 KiB - 1 MiB (default 1 MiB)"),
       }),
     },
     async (args, extra): Promise<CallToolResult> => {
@@ -382,7 +404,10 @@ export function createScryServer(config: ScryServerConfig): McpServer {
         if (args.afterSeq !== undefined && args.resumeToken !== undefined) {
           throw invalidInput("afterSeq and resumeToken are mutually exclusive");
         }
-        if (args.afterSeq !== undefined && (args.afterSeq < 0 || !Number.isSafeInteger(args.afterSeq))) {
+        if (
+          args.afterSeq !== undefined &&
+          (args.afterSeq < 0 || !Number.isSafeInteger(args.afterSeq))
+        ) {
           throw invalidInput("afterSeq must be a non-negative safe integer");
         }
         const timeoutMs = args.timeoutMs ?? DEFAULT_TIMEOUT_MS;

@@ -72,7 +72,8 @@ function scan(raw: string, flushEnd: boolean): ScanOutcome {
         // Remaining C0 controls, DEL, and other C1 controls are dropped.
         break;
       case "escape":
-        if (ch === ESC) seqStart = i; // restart: abort the half-read sequence
+        if (ch === ESC)
+          seqStart = i; // restart: abort the half-read sequence
         else if (ch === "[") state = "csi";
         else if (ch === "]") state = "osc";
         else if (ch === "P" || ch === "X" || ch === "^" || ch === "_") state = "str";

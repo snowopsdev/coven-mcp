@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { afterEach, describe, expect, test } from "vitest";
+import { type FakeDaemon, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { createScryServer, type ScryServerConfig } from "./server.js";
-import { startFakeDaemon, type FakeDaemon } from "../test/helpers/fake-daemon.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -34,7 +34,9 @@ const UPSTREAM_ENTRY = {
   verification_state: "verified",
 };
 
-async function connectClient(config: Partial<ScryServerConfig> & { socketPath: string }): Promise<Client> {
+async function connectClient(
+  config: Partial<ScryServerConfig> & { socketPath: string },
+): Promise<Client> {
   const server = createScryServer({ allowedRoots: [], ...config });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const c = new Client({ name: "scry-test", version: "0.0.0" });

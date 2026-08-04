@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "vitest";
+import { type FakeDaemon, jsonHandler, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { covenRequest } from "./daemon-client.js";
 import { ScryError } from "./errors.js";
-import { jsonHandler, startFakeDaemon, type FakeDaemon } from "../test/helpers/fake-daemon.js";
 
 let daemon: FakeDaemon | undefined;
 
@@ -69,7 +69,11 @@ describe("covenRequest", () => {
       jsonHandler(409, { error: { code: "session_not_live", message: "dead" } }),
     );
     const err = await expectScryError(
-      covenRequest(daemon.socketPath, { method: "POST", path: "/api/v1/sessions/x/input", body: {} }),
+      covenRequest(daemon.socketPath, {
+        method: "POST",
+        path: "/api/v1/sessions/x/input",
+        body: {},
+      }),
     );
     expect(err.code).toBe("SESSION_NOT_LIVE");
     expect(err.retryable).toBe(false);

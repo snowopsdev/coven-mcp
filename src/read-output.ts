@@ -1,6 +1,6 @@
 import { ScryError } from "./errors.js";
-import { createSanitizer, type Sanitizer } from "./sanitizer.js";
 import { MAX_PENDING_RAW_BYTES, type TokenCodec } from "./resume-token.js";
+import { createSanitizer, type Sanitizer } from "./sanitizer.js";
 
 /**
  * Bounded polling reader for session events (PRD §6.3, FR-11..FR-20).
@@ -86,7 +86,12 @@ function normalizeEventsPage(raw: unknown): EventsPage {
       const event = entry as Record<string, unknown>;
       const seq = event["seq"];
       const kind = event["kind"];
-      if (typeof seq !== "number" || !Number.isSafeInteger(seq) || seq < 0 || typeof kind !== "string") {
+      if (
+        typeof seq !== "number" ||
+        !Number.isSafeInteger(seq) ||
+        seq < 0 ||
+        typeof kind !== "string"
+      ) {
         throw contractError("invalid_event_schema", "Event entry has an unexpected shape");
       }
       return {
@@ -115,7 +120,10 @@ function defaultSleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-export async function readOutput(deps: ReadOutputDeps, params: ReadOutputParams): Promise<ReadOutputResult> {
+export async function readOutput(
+  deps: ReadOutputDeps,
+  params: ReadOutputParams,
+): Promise<ReadOutputResult> {
   const now = deps.now ?? Date.now;
   const sleep = deps.sleep ?? defaultSleep;
   const diagnostics = { malformedPayloads: 0, unknownEvents: 0 };
@@ -144,7 +152,11 @@ export async function readOutput(deps: ReadOutputDeps, params: ReadOutputParams)
   const deadline = now() + params.timeoutMs;
 
   const token = (): string =>
-    deps.codec.encode({ sessionId: params.sessionId, afterSeq, pendingRaw: sanitizer.pendingRaw() });
+    deps.codec.encode({
+      sessionId: params.sessionId,
+      afterSeq,
+      pendingRaw: sanitizer.pendingRaw(),
+    });
 
   const stop = (
     stopReason: "timeout" | "maxBytes" | "pageLimit",
@@ -231,7 +243,8 @@ export async function readOutput(deps: ReadOutputDeps, params: ReadOutputParams)
             // Revert: the event stays unconsumed and the token points at the
             // prior event with the prior parser state (FR-18).
             sanitizer = createSanitizer(snapshotPending);
-            const fitsFresh = emittedBytes <= MAX_TEXT_BYTES && pendingBytes <= MAX_PENDING_RAW_BYTES;
+            const fitsFresh =
+              emittedBytes <= MAX_TEXT_BYTES && pendingBytes <= MAX_PENDING_RAW_BYTES;
             if (!fitsFresh && textBytes === 0) {
               throw new ScryError(
                 "OUTPUT_STATE_TOO_LARGE",

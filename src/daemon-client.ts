@@ -43,7 +43,10 @@ function mapErrorBody(status: number, text: string): ScryError {
   if (upstreamCode !== undefined) {
     const mapped = DAEMON_CODE_MAP[upstreamCode];
     if (mapped) {
-      return new ScryError(mapped.code, mapped.message, false, { upstreamCode, httpStatus: status });
+      return new ScryError(mapped.code, mapped.message, false, {
+        upstreamCode,
+        httpStatus: status,
+      });
     }
     return upstreamError(`Daemon rejected the request (${upstreamCode})`, status, { upstreamCode });
   }

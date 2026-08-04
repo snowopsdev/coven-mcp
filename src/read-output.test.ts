@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { readOutput, MAX_TEXT_BYTES, type ReadOutputDeps } from "./read-output.js";
-import { createTokenCodec } from "./resume-token.js";
 import { ScryError } from "./errors.js";
+import { MAX_TEXT_BYTES, type ReadOutputDeps, readOutput } from "./read-output.js";
+import { createTokenCodec } from "./resume-token.js";
 
 const E = "\u001b";
 const SESSION = "sess-1";
@@ -169,7 +169,13 @@ describe("readOutput", () => {
 
     const tight = scriptedDeps(
       new Map<number | null, unknown>([
-        [null, page([out(1, `${"a".repeat(60_000)}\n`), out(2, `${"b".repeat(60_000)}\n`), exit(3)], false)],
+        [
+          null,
+          page(
+            [out(1, `${"a".repeat(60_000)}\n`), out(2, `${"b".repeat(60_000)}\n`), exit(3)],
+            false,
+          ),
+        ],
       ]),
     );
     tight.codec = codec;
@@ -179,7 +185,9 @@ describe("readOutput", () => {
     expect(t.lastSeq).toBe(1);
 
     const rest = scriptedDeps(
-      new Map<number | null, unknown>([[1, page([out(2, `${"b".repeat(60_000)}\n`), exit(3)], false)]]),
+      new Map<number | null, unknown>([
+        [1, page([out(2, `${"b".repeat(60_000)}\n`), exit(3)], false)],
+      ]),
     );
     rest.codec = codec;
     const r = await readOutput(rest, params({ maxBytes: 65_536, resumeToken: t.resumeToken! }));
@@ -221,7 +229,8 @@ describe("readOutput", () => {
     const big: RawEvent[] = [];
     for (let seq = 1; seq <= 6000; seq++) big.push({ seq, kind: "status", payload_json: "{}" });
     const big2: RawEvent[] = [];
-    for (let seq = 6001; seq <= 12000; seq++) big2.push({ seq, kind: "status", payload_json: "{}" });
+    for (let seq = 6001; seq <= 12000; seq++)
+      big2.push({ seq, kind: "status", payload_json: "{}" });
     const deps = scriptedDeps(
       new Map<number | null, unknown>([
         [null, page(big, true)],
@@ -294,7 +303,9 @@ describe("readOutput", () => {
 
   test("an event emitting more than the 1 MiB fresh budget in one line is state-too-large", async () => {
     const oneLine = `${"w".repeat(MAX_TEXT_BYTES + 10)}\n`;
-    const deps = scriptedDeps(new Map<number | null, unknown>([[null, page([out(1, oneLine)], false)]]));
+    const deps = scriptedDeps(
+      new Map<number | null, unknown>([[null, page([out(1, oneLine)], false)]]),
+    );
     await expect(readOutput(deps, params())).rejects.toMatchObject({
       code: "OUTPUT_STATE_TOO_LARGE",
     });
@@ -343,7 +354,9 @@ describe("readOutput", () => {
   });
 
   test("an already-aborted signal stops promptly without fetching", async () => {
-    const deps = scriptedDeps(new Map<number | null, unknown>([[null, page([out(1, "x\n")], false)]]));
+    const deps = scriptedDeps(
+      new Map<number | null, unknown>([[null, page([out(1, "x\n")], false)]]),
+    );
     const controller = new AbortController();
     controller.abort();
     await expect(readOutput(deps, params({ signal: controller.signal }))).rejects.toBeInstanceOf(

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from "vitest";
+import { type FakeDaemon, jsonHandler, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { covenRequest } from "./daemon-client.js";
-import { createHealthGate } from "./health-gate.js";
 import { ScryError } from "./errors.js";
-import { jsonHandler, startFakeDaemon, type FakeDaemon } from "../test/helpers/fake-daemon.js";
+import { createHealthGate } from "./health-gate.js";
 
 let daemon: FakeDaemon | undefined;
 
@@ -38,15 +38,23 @@ async function expectScryError(promise: Promise<unknown>): Promise<ScryError> {
 describe("createHealthGate", () => {
   test("passes when ok, apiVersion matches, and the required capability is exactly true", async () => {
     daemon = await startFakeDaemon(jsonHandler(200, GOOD_HEALTH));
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     await expect(gate.require("sessions")).resolves.toMatchObject({
       apiVersion: "coven.daemon.v1",
     });
   });
 
   test("rejects a wrong apiVersion with INCOMPATIBLE_DAEMON naming the found version", async () => {
-    daemon = await startFakeDaemon(jsonHandler(200, { ...GOOD_HEALTH, apiVersion: "coven.daemon.v2" }));
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    daemon = await startFakeDaemon(
+      jsonHandler(200, { ...GOOD_HEALTH, apiVersion: "coven.daemon.v2" }),
+    );
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     const err = await expectScryError(gate.require("sessions"));
     expect(err.code).toBe("INCOMPATIBLE_DAEMON");
     expect(err.retryable).toBe(false);
@@ -57,7 +65,10 @@ describe("createHealthGate", () => {
     daemon = await startFakeDaemon(
       jsonHandler(200, { ...GOOD_HEALTH, capabilities: { events: true } }),
     );
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     const err = await expectScryError(gate.require("sessions"));
     expect(err.code).toBe("CAPABILITY_UNAVAILABLE");
     expect(err.retryable).toBe(true);
@@ -68,14 +79,20 @@ describe("createHealthGate", () => {
     daemon = await startFakeDaemon(
       jsonHandler(200, { ...GOOD_HEALTH, capabilities: { sessions: "enabled" } }),
     );
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     const err = await expectScryError(gate.require("sessions"));
     expect(err.code).toBe("CAPABILITY_UNAVAILABLE");
   });
 
   test("ok:false fails closed even when the version matches", async () => {
     daemon = await startFakeDaemon(jsonHandler(200, { ...GOOD_HEALTH, ok: false }));
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     const err = await expectScryError(gate.require("sessions"));
     expect(err.code).toBe("DAEMON_UNAVAILABLE");
   });
@@ -83,7 +100,10 @@ describe("createHealthGate", () => {
   test("reuses a cached success within the 1.5s TTL and refetches after it expires", async () => {
     daemon = await startFakeDaemon(jsonHandler(200, GOOD_HEALTH));
     let clock = 0;
-    const gate = gateFor(() => daemon!.socketPath, () => clock);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => clock,
+    );
     await gate.require("sessions");
     clock = 1_400;
     await gate.require("events");
@@ -101,7 +121,10 @@ describe("createHealthGate", () => {
         res.end(JSON.stringify(GOOD_HEALTH));
       }, 50);
     });
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     await Promise.all([gate.require("sessions"), gate.require("events"), gate.require("sessions")]);
     expect(daemon.requests.length).toBe(1);
   });
@@ -109,7 +132,10 @@ describe("createHealthGate", () => {
   test("a cached failure expires with the TTL, allowing recovery after the daemon starts", async () => {
     let clock = 0;
     let socketPath = "/nonexistent/scry-test/no.sock";
-    const gate = gateFor(() => socketPath, () => clock);
+    const gate = gateFor(
+      () => socketPath,
+      () => clock,
+    );
 
     const err = await expectScryError(gate.require("sessions"));
     expect(err.code).toBe("DAEMON_UNAVAILABLE");
@@ -128,7 +154,10 @@ describe("createHealthGate", () => {
 
   test("a malformed health schema is a bounded UPSTREAM_ERROR", async () => {
     daemon = await startFakeDaemon(jsonHandler(200, { unexpected: "shape" }));
-    const gate = gateFor(() => daemon!.socketPath, () => 0);
+    const gate = gateFor(
+      () => daemon!.socketPath,
+      () => 0,
+    );
     const err = await expectScryError(gate.require("sessions"));
     expect(err.code).toBe("UPSTREAM_ERROR");
     expect(err.details).toMatchObject({ kind: "invalid_health_schema" });
