@@ -59,6 +59,19 @@ Pinned upstream baselines (verified Aug 3–4, 2026):
 
 `coven-reach` is an MCP server for filesystem and web operations; `coven-codeflow` is an MCP *client*. Neither exposes the daemon itself, which is the gap this fills.
 
+### Evidence of use, not just installation
+
+Captured from a live `coven 0.0.34` daemon during development, and reproducible:
+
+| Evidence | Where to see it |
+| --- | --- |
+| The exact HTTP calls made against the daemon socket | `npm run demo` prints its real request log — `GET /api/v1/health`, `/capabilities/harnesses`, `/sessions`, `POST /sessions`, `/sessions/:id/input`, `/sessions/:id/kill`, `GET /sessions/:id/events` |
+| A real session driven end to end | Session `a6f8704d-0a2f-4eee-ac76-dc929b9944dd` was started, driven, and killed through this server against the live daemon; `coven_get_session` then reported status `killed` |
+| Real PTY output parsed | The same session's 27 events across kinds `output`, `input`, `kill`, and `exit` were read back as clean ANSI-free text through `coven_read_output` |
+| Code using the OpenCoven interface | `src/daemon-client.ts` (HTTP over `socketPath`), `src/health-gate.ts` (capability handshake), `src/normalize.ts` (the daemon's response shapes) |
+| Configuration | README § Configuration — the `mcpServers` block a user actually writes |
+| Architecture | README § Architecture — request path, trust boundary, and the two response paths |
+
 ### Upstream behaviors discovered while building
 
 Verified against the live daemon rather than assumed from docs. Each is documented in the README and encoded in contract tests:
@@ -118,6 +131,7 @@ None claimed. Opportunistic upstream documentation or bug PRs are tracked in `PL
 - **License:** unmodified MIT, only year and holder populated, no added restrictions.
 - **DCO:** every commit is signed off; AI-assisted commits carry `Co-Authored-By` trailers.
 - **Scope honesty:** token streaming, Windows, semantic memory search, hub/scheduler/travel routes, `POST /actions`, and claims are all out of scope and documented as such with reasons in the README.
+- **Attribution:** no third-party code, assets, or content are vendored. Two runtime dependencies are used unmodified via npm — [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) (MIT) for the MCP protocol layer and [`zod`](https://github.com/colinhacks/zod) (MIT) for input schemas — plus dev-only TypeScript, Vitest, and Biome. Versions are pinned in `package-lock.json`. Everything in `src/` is original.
 
 ## Outstanding before freeze
 
