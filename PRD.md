@@ -353,7 +353,7 @@ Not met ⇒ **descope immediately** to the Familiar Contract validator per `PLAN
 - [ ] `npm run verify` runs typecheck, lint, tests, build, package smoke test, and README/HACKATHON checks from a clean clone with no credentials
 - [ ] 15 README sections present and non-empty
 - [ ] Demo ≤5 min showing problem, startup, workflow, integration point, results, one limitation
-- [ ] Tag `july-hackathon-2026-final` pushed; SHA in `HACKATHON.md`
+- [ ] Tag `august-hackathon-2026-final` pushed; SHA in `HACKATHON.md`
 
 ## 9. Demo script (≤5 min)
 
@@ -375,7 +375,7 @@ Not met ⇒ **descope immediately** to the Familiar Contract validator per `PLAN
 
 ## 11. Open questions
 
-1. **Resolved Aug 4, 2026 — official brief verified** via <https://hackathon.opencoven.ai/>. Deadline (before Sat Aug 8, 00:00 EDT), freeze tag (`july-hackathon-2026-final`), submission URL, MIT/DCO rules, and the ≤5-minute demo rule all match what this document assumed. Two corrections landed: the README section list is the guide's, not ours (PLAN §6), and scoring is 100 core / 60 to qualify / 25 bonus with seven unweighted criteria. **Residual:** the event repository is `OpenCoven/opencoven-beta-august-hackathon-2026` (private), so `participant/LICENSE_TEMPLATE.txt` and `participant/HACKATHON_TEMPLATE.md` still need diffing against our hand-written versions before freeze. Note the naming trap: the repository is August-named but the required tag is `july-hackathon-2026-final` — PLAN §8.
+1. **Resolved Aug 4, 2026 — official brief verified** via <https://hackathon.opencoven.ai/>. Deadline (before Sat Aug 8, 00:00 EDT), freeze tag (`august-hackathon-2026-final`), submission URL, MIT/DCO rules, and the ≤5-minute demo rule all match what this document assumed. Two corrections landed: the README section list is the guide's, not ours (PLAN §6), and scoring is 100 core / 60 to qualify / 25 bonus with seven unweighted criteria. **Residual:** the event repository is `OpenCoven/opencoven-beta-august-hackathon-2026` (private), so `participant/LICENSE_TEMPLATE.txt` and `participant/HACKATHON_TEMPLATE.md` still need diffing against our hand-written versions before freeze. Note the naming trap: the repository is August-named but the required tag is `august-hackathon-2026-final` — PLAN §8.
 2. The local `GET /api/v1/memory` response currently contains zero entries. Seed a non-sensitive demo fixture through supported Coven behavior, or deliberately demonstrate an honest empty result; never open the memory database directly.
 3. Does `coven doctor` confirm at least one authenticated harness for the live write demo? Harness capability discovery alone does not prove provider authentication.
 4. Publish to npm, or repo-only? **Resolved Aug 4:** @@@ is unavailable — an unrelated Solana-wallet MCP server published under that name on 2026-07-06 — and @@@. The package and repository are therefore named `coven-mcp`, which is free on npm and GitHub. Whether to actually publish remains open; publishing strengthens reproducibility and costs ~30 min. Either choice still requires a compiled entry point and clean-clone package smoke test.

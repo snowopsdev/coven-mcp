@@ -10,12 +10,12 @@
 | One-sentence summary | Exposes Coven sessions, output, harness capabilities, and memory listing as MCP tools so any stdio-capable MCP client can see and drive Coven without leaving the client |
 | Team | snow (solo) |
 | Repo URL | <https://github.com/snowopsdev/coven-mcp> (**must be public before submitting**) |
-| Freeze tag | `july-hackathon-2026-final` |
+| Freeze tag | `august-hackathon-2026-final` |
 | Final commit SHA | TODO at freeze |
 | Demo | `npm run demo` — a deterministic local command, which the submission guide accepts as a demo artifact. Requires no Coven install, credentials, network, or provider spend. See README § Demo. |
 | License | MIT, unmodified — greenfield, no prior work reused |
 
-**Naming note for reviewers:** the tag is *July*-named while the event runs in August and the submission repository is `opencoven-beta-august-hackathon-2026`. This is intentional and matches the rules verbatim — both the [submission guide](https://hackathon.opencoven.ai/docs/submission-guide.html) and the [official rules](https://hackathon.opencoven.ai/docs/official-rules.html) specify `july-hackathon-2026-final`, and the rules give the full `git tag -a` command using it.
+**Naming note for reviewers:** the tag matches the event repository, `opencoven-beta-august-hackathon-2026`. The published [submission guide](https://hackathon.opencoven.ai/docs/submission-guide.html) and [official rules](https://hackathon.opencoven.ai/docs/official-rules.html) still print a July-named tag and a July-named repository URL; both appear to be stale carry-overs from when the rules were published in late July for an August event.
 
 ## How to evaluate this in five minutes
 

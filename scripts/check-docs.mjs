@@ -78,7 +78,7 @@ if (!hackathon.includes("1fe9a744356ea3af6b47a3d497a483513b36eb15")) {
   console.error("DOCS FAIL: HACKATHON.md is missing the pinned upstream SHA");
   failed = true;
 }
-if (!hackathon.includes("july-hackathon-2026-final")) {
+if (!hackathon.includes("august-hackathon-2026-final")) {
   console.error("DOCS FAIL: HACKATHON.md is missing the freeze tag name");
   failed = true;
 }

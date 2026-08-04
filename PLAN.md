@@ -4,7 +4,7 @@
 
 **Provisional deadline:** Fri Aug 7, 23:59 EDT (tag must exist before Sat Aug 8 00:00 EDT)
 
-**Freeze tag:** `july-hackathon-2026-final` — the exact string, **not** an August variant, even though the event runs in August and the submission repository is named `...-august-...`. Two independent official documents specify the July-named tag; see §8.
+**Freeze tag:** `august-hackathon-2026-final` — matching the event repository. Note that the *published* guide and rules both print a July-named string; that text is stale. See §8 before tagging.
 
 ---
 
@@ -26,7 +26,7 @@
 - Live handshake verified against local `coven 0.0.34`: `GET /api/v1/health` returned `ok: true`, `apiVersion: "coven.daemon.v1"`, and `sessions`/`events` capabilities enabled.
 - API assumptions below were rechecked against `OpenCoven/coven` commit `1fe9a744356ea3af6b47a3d497a483513b36eb15`. Pin this SHA until the implementation passes against a newer reviewed commit.
 - The narrower novelty comparison covered the public OpenCoven repositories visible on Aug 3 and pins `coven-reach` at `07f5c9d5e4863c1a9a187a070e413d51110ad610` and `coven-codeflow` at `5fd9df1e5133c72a1373ff01f7b6416dfe30534b`. The familiar and harness-capability specs are within the pinned `coven` commit.
-- **The official brief is now verified** (Aug 4, 2026, via <https://hackathon.opencoven.ai/>). Deadline, freeze tag, and submission URL all match the earlier provisional values; the README section list did not, and has been replaced — see §6. The event *repository* is `OpenCoven/opencoven-beta-august-hackathon-2026` (private, not reachable with the entrant's token), so the `participant/` templates for LICENSE and HACKATHON.md still need reconciling before freeze — and note the July-tag / August-repo naming trap in §8.
+- **The official brief is now verified** (Aug 4, 2026, via <https://hackathon.opencoven.ai/>). Deadline, freeze tag, and submission URL all match the earlier provisional values; the README section list did not, and has been replaced — see §6. The event *repository* is `OpenCoven/opencoven-beta-august-hackathon-2026` (private, not reachable with the entrant's token), so the `participant/` templates for LICENSE and HACKATHON.md still need reconciling before freeze — and note the tag-name discrepancy in §8: the published docs print a July-named tag, but the August-named one is authoritative.
 - Refresh this baseline after each build block; it is a dated starting state, not a live status dashboard.
 
 ---
@@ -192,8 +192,8 @@ Bonus points require the PR to be **merged before scores lock** — outside your
 | --- | --- |
 | Build window | Aug 2, 2026 23:30 EDT → Aug 8, 2026 00:00 EDT (120.5 h) |
 | Deadline | Midnight **beginning** Sat Aug 8, `America/New_York`; must be submitted before the clock passes `12:00:00 AM EDT` |
-| Freeze tag | `july-hackathon-2026-final` (matches the provisional guess) |
-| Tag command | `git tag -a july-hackathon-2026-final -m "OpenCoven Beta Hackathon final submission"` — the guide specifies this exact message |
+| Freeze tag | `august-hackathon-2026-final` (**differs** from the July string the published docs print — see the note below) |
+| Tag command | `git tag -a august-hackathon-2026-final -m "OpenCoven Beta Hackathon final submission"` — message per the guide; tag name per the event repo |
 | Submission form | <https://github.com/OpenCoven/opencoven-beta-august-hackathon-2026/issues/new/choose> (private; the guide prints the `july` variant, which appears stale — see the note below) |
 | Scoring | 100 core, **60 minimum** for prize eligibility, up to 25 bonus (bonus cannot make an entry eligible) |
 | Demo | Five minutes or less; public video, live demo, terminal recording, or local command; must not require judges to purchase anything |
@@ -207,15 +207,15 @@ git status
 git add -A
 git commit -s -m "chore: freeze hackathon submission"
 git push
-git tag -a july-hackathon-2026-final -m "OpenCoven Beta Hackathon final submission"
-git push origin july-hackathon-2026-final
-git rev-list -n 1 july-hackathon-2026-final
+git tag -a august-hackathon-2026-final -m "OpenCoven Beta Hackathon final submission"
+git push origin august-hackathon-2026-final
+git rev-list -n 1 august-hackathon-2026-final
 ```
 
 Then, before filing the issue:
 
 - [ ] **Obtain access to `OpenCoven/opencoven-beta-august-hackathon-2026`** (private — request via the event Discord), then diff `LICENSE` against `participant/LICENSE_TEMPLATE.txt` and `HACKATHON.md` against `participant/HACKATHON_TEMPLATE.md`. Ours are hand-written but rules-compliant in content.
-- [ ] Re-read the issue form and confirm the **tag string** it asks for still reads `july-hackathon-2026-final`
+- [ ] Re-read the issue form and confirm the **tag string** it asks for still reads `august-hackathon-2026-final`
 - [ ] Make the repository **public** — judges must be able to clone it (preflight fails while private)
 - [ ] Clone fresh from a clean location; verify tag checks out
 - [ ] Run every README command from that clean clone
@@ -227,16 +227,18 @@ Then, before filing the issue:
 - [ ] HACKATHON.md complete, SHA recorded
 - [ ] Tag points at the intended commit — preflight covers this
 
-### ⚠ July / August naming trap
+### ⚠ Tag name: the published docs are stale
 
-The event's naming is inconsistent, and getting it wrong is unrecoverable after the deadline:
+Getting this wrong is unrecoverable after the deadline, and the two available sources disagree.
 
-| Artifact | Correct value | Evidence |
+| Source | Says | Status |
 | --- | --- | --- |
-| Freeze **tag** | `july-hackathon-2026-final` | Submission guide *and* official rules both print the July string verbatim; the rules even give the full `git tag -a` command |
-| Submission **repository** | `opencoven-beta-**august**-hackathon-2026` | Confirmed to exist (private) by the entrant; the guide's `july` URL appears stale |
+| Published submission guide and official rules | `july-hackathon-2026-final`, in six places including a full `git tag -a` command | **Stale.** The same guide also prints a July-named submission repository, which does not exist |
+| Event repository and submission form | `august-hackathon-2026-final` | **Authoritative.** `OpenCoven/opencoven-beta-august-hackathon-2026` is the real repo; the entrant confirmed the August tag from the form |
 
-The July naming is most likely a legacy artifact — the rules were published under `ctech.llc/072626hackathonrules` (July 26) for an event that runs August 2–8. **Do not "fix" the tag to match the repository.** Confirm both against the issue form when it opens; if the form states a different tag, the form wins and the tag must be re-cut before the deadline.
+The July strings are most likely a legacy artifact: the rules were published at `ctech.llc/072626hackathonrules` (July 26) for an event that runs August 2–8, and the repository URL in the same document is wrong in exactly the same direction.
+
+**Use `august-hackathon-2026-final`. Do not copy the tag out of the published docs.** `scripts/freeze-preflight.mjs` fails if a July-named tag ever appears locally. If the issue form contradicts this when you open it, the form wins — re-cut the tag before the deadline and record the correction.
 
 ### After the deadline
 

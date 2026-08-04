@@ -168,17 +168,19 @@ check("repository is public and pushed", () => {
   return `public and in sync with HEAD (${head.slice(0, 8)})`;
 });
 
-const TAG = process.env.COVEN_MCP_FREEZE_TAG ?? "july-hackathon-2026-final";
+const TAG = process.env.COVEN_MCP_FREEZE_TAG ?? "august-hackathon-2026-final";
 
-check("no August-named tag (the July/August naming trap)", () => {
-  // The event runs in August and its submission repo is August-named, but
-  // both official documents require the July-named tag. A tag "corrected" to
-  // August is unrecoverable after the deadline.
+check("no July-named tag (the published docs are stale here)", () => {
+  // The public submission guide and rules both print july-hackathon-2026-final,
+  // but the event repository is August-named and the entrant confirmed the
+  // August tag from the submission form. Copying the tag out of the published
+  // docs is therefore the mistake to catch, and it is unrecoverable after the
+  // deadline.
   const tags = sh("git", ["tag", "--list"]).split("\n").filter(Boolean);
-  const wrong = tags.filter((t) => /august-hackathon-2026-final/.test(t));
+  const wrong = tags.filter((t) => /july-hackathon-2026-final/.test(t));
   assert(
     wrong.length === 0,
-    `found ${wrong.join(", ")} — the required tag is ${TAG}, despite the August-named event repo`,
+    `found ${wrong.join(", ")} — that is the string the public docs print, but the required tag is ${TAG}`,
   );
   return `none; required tag remains ${TAG}`;
 });
