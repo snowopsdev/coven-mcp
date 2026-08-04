@@ -1,0 +1,511 @@
+<title>coven-mcp — Architecture</title>
+<style>
+  :root {
+    --ground: #e8ecef;
+    --surface: #fbfcfd;
+    --surface-2: #f1f4f7;
+    --ink: #0f1519;
+    --muted: #586471;
+    --faint: #7d8894;
+    --line: #ccd5dd;
+    --line-soft: #dfe6ec;
+    --accent: #0f6e64;
+    --accent-ink: #0b544c;
+    --accent-soft: #dcece9;
+    --warn: #8a5a00;
+    --warn-soft: #f7eddb;
+    --deny: #9b2c2c;
+    --deny-soft: #f8e7e7;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --rail: 15.5rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d1114;
+      --surface: #141a1f;
+      --surface-2: #1a2229;
+      --ink: #e6ecf1;
+      --muted: #97a4b1;
+      --faint: #77848f;
+      --line: #26313a;
+      --line-soft: #1f272e;
+      --accent: #4fb3a5;
+      --accent-ink: #6ecabd;
+      --accent-soft: #102b28;
+      --warn: #d9a441;
+      --warn-soft: #2b2314;
+      --deny: #e08585;
+      --deny-soft: #2e1b1b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d1114; --surface: #141a1f; --surface-2: #1a2229;
+    --ink: #e6ecf1; --muted: #97a4b1; --faint: #77848f;
+    --line: #26313a; --line-soft: #1f272e;
+    --accent: #4fb3a5; --accent-ink: #6ecabd; --accent-soft: #102b28;
+    --warn: #d9a441; --warn-soft: #2b2314; --deny: #e08585; --deny-soft: #2e1b1b;
+  }
+  :root[data-theme="light"] {
+    --ground: #e8ecef; --surface: #fbfcfd; --surface-2: #f1f4f7;
+    --ink: #0f1519; --muted: #586471; --faint: #7d8894;
+    --line: #ccd5dd; --line-soft: #dfe6ec;
+    --accent: #0f6e64; --accent-ink: #0b544c; --accent-soft: #dcece9;
+    --warn: #8a5a00; --warn-soft: #f7eddb; --deny: #9b2c2c; --deny-soft: #f8e7e7;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: 2.5rem; max-width: 78rem; margin: 0 auto; padding: 2.5rem 1.5rem 6rem; }
+  @media (max-width: 62rem) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; } }
+
+  /* ---- rail ---- */
+  .rail { position: sticky; top: 2.5rem; align-self: start; max-height: calc(100vh - 5rem); overflow-y: auto; }
+  @media (max-width: 62rem) { .rail { position: static; max-height: none; } }
+  .rail-title { font-family: var(--mono); font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.15rem; }
+  .rail-sub { font-size: 0.78rem; color: var(--faint); margin: 0 0 1.25rem; }
+  .rail nav { display: flex; flex-direction: column; gap: 0.1rem; border-left: 1px solid var(--line); }
+  .rail a {
+    font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0.01em;
+    color: var(--muted); text-decoration: none; padding: 0.3rem 0 0.3rem 0.85rem;
+    margin-left: -1px; border-left: 2px solid transparent;
+  }
+  .rail a:hover { color: var(--ink); }
+  .rail a.on { color: var(--accent-ink); border-left-color: var(--accent); font-weight: 600; }
+  .rail a:focus-visible, .theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  .theme-btn {
+    margin-top: 1.25rem; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--line); color: var(--muted);
+    padding: 0.35rem 0.6rem; border-radius: 3px; cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+  /* ---- masthead ---- */
+  header.mast { border-bottom: 2px solid var(--ink); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+  .eyebrow { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 0.6rem; }
+  h1 { font-family: var(--mono); font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; margin: 0 0 0.5rem; text-wrap: balance; }
+  .lede { font-size: 1.05rem; color: var(--muted); margin: 0; max-width: 62ch; text-wrap: pretty; }
+
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); margin-top: 1.75rem; }
+  .fact { background: var(--surface); padding: 0.7rem 0.85rem; }
+  .fact dt { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); margin: 0 0 0.2rem; }
+  .fact dd { font-family: var(--mono); font-size: 1.15rem; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
+
+  /* ---- sections ---- */
+  section { margin-bottom: 3.25rem; scroll-margin-top: 1.5rem; }
+  h2 { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 0.3rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); }
+  h3 { font-family: var(--mono); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 1.75rem 0 0.6rem; }
+  p { max-width: 68ch; text-wrap: pretty; }
+  .note { color: var(--muted); font-size: 0.93rem; }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2); padding: 0.08em 0.32em; border-radius: 2px; }
+
+  /* ---- tables ---- */
+  .scroll { overflow-x: auto; border: 1px solid var(--line-soft); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); font-weight: 600; background: var(--surface-2); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.mono, th.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .num { text-align: right; }
+
+  /* ---- pills ---- */
+  .pill { display: inline-block; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.42rem; border-radius: 2px; white-space: nowrap; }
+  .pill.read { background: var(--accent-soft); color: var(--accent-ink); }
+  .pill.write { background: var(--warn-soft); color: var(--warn); }
+  .pill.destructive { background: var(--deny-soft); color: var(--deny); }
+  .pill.yes { background: var(--accent-soft); color: var(--accent-ink); }
+  .pill.no { background: var(--surface-2); color: var(--faint); }
+
+  /* ---- flow diagram ---- */
+  .flow { display: grid; grid-template-columns: auto auto auto auto; align-items: center; gap: 0.65rem; overflow-x: auto; padding: 1.25rem 0.25rem; }
+  @media (max-width: 52rem) { .flow { grid-template-columns: 1fr; } .flow .link { transform: rotate(90deg); justify-self: center; } }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 3px; padding: 0.7rem 0.85rem; min-width: 9.5rem; }
+  .box .bt { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; }
+  .box .bd { font-size: 0.74rem; color: var(--muted); line-height: 1.45; margin-top: 0.15rem; }
+  .stack { display: flex; flex-direction: column; gap: 0.5rem; border: 1px dashed var(--accent); border-radius: 4px; padding: 0.8rem; background: var(--accent-soft); }
+  .stack-label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 0.1rem; }
+  .box.gate { border-color: var(--accent); border-width: 2px; }
+  .link { font-family: var(--mono); font-size: 0.68rem; color: var(--faint); text-align: center; white-space: nowrap; }
+  .link b { display: block; color: var(--muted); font-weight: 500; }
+
+  /* ---- pipeline strip ---- */
+  ol.stages { list-style: none; counter-reset: s; padding: 0; margin: 0; display: grid; gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); }
+  ol.stages li { counter-increment: s; background: var(--surface); padding: 0.7rem 0.9rem 0.7rem 2.9rem; position: relative; }
+  ol.stages li::before {
+    content: counter(s); position: absolute; left: 0.9rem; top: 0.72rem;
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 700; color: var(--accent-ink);
+  }
+  ol.stages .sn { font-family: var(--mono); font-size: 0.85rem; font-weight: 700; }
+  ol.stages .sw { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); margin-left: 0.5rem; }
+  ol.stages .sd { font-size: 0.85rem; color: var(--muted); margin-top: 0.1rem; }
+
+  ul.plain { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+  ul.plain li { padding-left: 1.1rem; position: relative; font-size: 0.9rem; max-width: 72ch; }
+  ul.plain li::before { content: "—"; position: absolute; left: 0; color: var(--accent); font-family: var(--mono); }
+  ul.plain.deny li::before { content: "×"; color: var(--deny); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 1.25rem; font-size: 0.8rem; color: var(--faint); font-family: var(--mono); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <aside class="rail">
+    <p class="rail-title">coven-mcp</p>
+    <p class="rail-sub">Architecture reference · v0.1.0</p>
+    <nav id="toc">
+      <a href="#context">System context</a>
+      <a href="#modules">Module map</a>
+      <a href="#lifecycle">Request lifecycle</a>
+      <a href="#tools">Tool surface</a>
+      <a href="#security">Security model</a>
+      <a href="#pipeline">Output pipeline</a>
+      <a href="#errors">Error taxonomy</a>
+      <a href="#limits">Limits and budgets</a>
+      <a href="#upstream">Upstream contract</a>
+      <a href="#config">Configuration</a>
+      <a href="#verification">Verification</a>
+      <a href="#deps">Dependencies</a>
+      <a href="#nongoals">Non-goals</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button">Toggle theme</button>
+  </aside>
+
+  <main>
+    <header class="mast">
+      <p class="eyebrow">Architecture reference</p>
+      <h1>coven-mcp</h1>
+      <p class="lede">An MCP server that bridges the Coven daemon to any stdio-capable MCP client, exposing session lifecycle, event output, harness capabilities, and memory listing as nine tools — without changing Coven itself.</p>
+      <dl class="facts">
+        <div class="fact"><dt>Tools</dt><dd>9</dd></div>
+        <div class="fact"><dt>Modules</dt><dd>11</dd></div>
+        <div class="fact"><dt>Source LOC</dt><dd>1,844</dd></div>
+        <div class="fact"><dt>Tests</dt><dd>137</dd></div>
+        <div class="fact"><dt>Error codes</dt><dd>11</dd></div>
+        <div class="fact"><dt>Deps</dt><dd>2</dd></div>
+      </dl>
+    </header>
+
+    <section id="context">
+      <h2>System context</h2>
+      <p class="note">Two processes, one socket. The server owns no state beyond a health cache and a per-process token secret; everything durable lives in the daemon.</p>
+      <div class="flow">
+        <div class="box">
+          <div class="bt">MCP client</div>
+          <div class="bd">Claude Desktop, Cursor, any stdio client</div>
+        </div>
+        <div class="link">⟷<b>stdio JSON-RPC</b></div>
+        <div class="stack">
+          <div class="stack-label">coven-mcp</div>
+          <div class="box"><div class="bt">Tools</div><div class="bd">6 read · 3 write</div></div>
+          <div class="box gate"><div class="bt">Guards</div><div class="bd">validate · version and capability gate · project-root allowlist</div></div>
+          <div class="box"><div class="bt">Socket client</div><div class="bd">timeouts · 4 MiB caps</div></div>
+          <div class="box"><div class="bt">Response handling</div><div class="bd">normalize · sanitize · sign resume token</div></div>
+        </div>
+        <div class="link">⟷<b>HTTP over unix socket</b></div>
+      </div>
+      <div class="flow" style="grid-template-columns:auto;">
+        <div class="box" style="max-width:22rem;">
+          <div class="bt">Coven daemon → harness PTY sessions</div>
+          <div class="bd"><code>coven.daemon.v1</code> · no authentication · trust is same-user socket access</div>
+        </div>
+      </div>
+      <p class="note"><strong>Guards is a trust boundary, not glue.</strong> Anything reaching the socket client has already been validated, version-gated, and — for write tools — authorized against an allowlisted root. Denials never reach the daemon.</p>
+    </section>
+
+    <section id="modules">
+      <h2>Module map</h2>
+      <p class="note">Eleven source modules in five layers. <code>errors.ts</code> is the only shared leaf; nothing else fans in, so the dependency graph is acyclic and shallow.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Module</th><th class="num">LOC</th><th>Layer</th><th>Role</th><th class="mono">Depends on</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">index.ts</td><td class="num">42</td><td>entrypoint</td><td>Resolves the socket path, parses the allowlist, fails fast on misconfiguration, wires stdio, handles shutdown.</td><td class="mono">allowlist, server, socket-path</td></tr>
+            <tr><td class="mono">server.ts</td><td class="num">506</td><td>tool surface</td><td>Registers all nine tools, validates inputs before any I/O, applies gates, shapes every result and error.</td><td class="mono">allowlist, daemon-client, errors, health-gate, normalize, read-output, resume-token</td></tr>
+            <tr><td class="mono">allowlist.ts</td><td class="num">73</td><td>authorization</td><td>Parses roots, canonicalizes through symlinks, enforces path-component containment.</td><td class="mono">errors</td></tr>
+            <tr><td class="mono">health-gate.ts</td><td class="num">120</td><td>gating</td><td>Handshake gate before every non-health call. 1.5 s single-flight cache.</td><td class="mono">errors</td></tr>
+            <tr><td class="mono">daemon-client.ts</td><td class="num">186</td><td>transport</td><td>HTTP over Unix socket: timeouts, 4 MiB caps, abort propagation, error-envelope mapping.</td><td class="mono">errors</td></tr>
+            <tr><td class="mono">normalize.ts</td><td class="num">329</td><td>boundary</td><td>The single snake_case → camelCase boundary, plus the memory excerpt redaction policy.</td><td class="mono">errors</td></tr>
+            <tr><td class="mono">read-output.ts</td><td class="num">297</td><td>output pipeline</td><td>Bounded polling reader with cursor guards, budgets, and one documented stop tuple.</td><td class="mono">errors, resume-token, sanitizer</td></tr>
+            <tr><td class="mono">sanitizer.ts</td><td class="num">141</td><td>output pipeline</td><td>Streaming terminal state machine with compacted, resumable parser state.</td><td class="mono">—</td></tr>
+            <tr><td class="mono">resume-token.ts</td><td class="num">108</td><td>output pipeline</td><td>HMAC-signed continuation tokens, session-bound and size-capped.</td><td class="mono">errors</td></tr>
+            <tr><td class="mono">errors.ts</td><td class="num">31</td><td>foundation</td><td>The error type and the closed set of eleven codes.</td><td class="mono">—</td></tr>
+            <tr><td class="mono">socket-path.ts</td><td class="num">11</td><td>foundation</td><td>Socket path resolution precedence.</td><td class="mono">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="lifecycle">
+      <h2>Request lifecycle</h2>
+      <p class="note">Every tool call runs the same six stages. Stages 1–3 can reject without touching the daemon.</p>
+      <ol class="stages">
+        <li><span class="sn">Schema validation</span><span class="sw">server.ts</span><div class="sd">zod shape plus explicit byte, charset, and range checks. Failures return <code>INVALID_INPUT</code> before any I/O.</div></li>
+        <li><span class="sn">Health and capability gate</span><span class="sw">health-gate.ts</span><div class="sd"><code>ok === true</code>, exact API version, required capability strictly <code>true</code>. Cached 1.5 s, single-flight.</div></li>
+        <li><span class="sn">Authorization</span><span class="sw">allowlist.ts</span><div class="sd">Write tools only. Canonicalize, then path-component containment. Input and kill authorize the daemon's own record.</div></li>
+        <li><span class="sn">Transport</span><span class="sw">daemon-client.ts</span><div class="sd">HTTP over the Unix socket with timeouts, 4 MiB caps, and abort propagation.</div></li>
+        <li><span class="sn">Normalization or output pipeline</span><span class="sw">normalize.ts · read-output.ts</span><div class="sd">JSON becomes stable camelCase; PTY event streams are sanitized and tokenized.</div></li>
+        <li><span class="sn">Result shaping</span><span class="sw">server.ts</span><div class="sd">One JSON text content item, or <code>isError</code> with a structured error body.</div></li>
+      </ol>
+    </section>
+
+    <section id="tools">
+      <h2>Tool surface</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Tool</th><th>Authority</th><th class="mono">Route</th><th class="mono">Capability</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">coven_health</td><td><span class="pill read">read</span></td><td class="mono">GET /health</td><td class="mono">—</td><td>Never returns a tool error; an unreachable daemon is reported in the result body.</td></tr>
+            <tr><td class="mono">coven_list_harnesses</td><td><span class="pill read">read</span></td><td class="mono">GET /capabilities/harnesses</td><td class="mono">—</td><td>May disclose absolute harness manifest paths.</td></tr>
+            <tr><td class="mono">coven_list_sessions</td><td><span class="pill read">read</span></td><td class="mono">GET /sessions</td><td class="mono">sessions</td><td>Normalizes both the bare array and the paginated envelope.</td></tr>
+            <tr><td class="mono">coven_get_session</td><td><span class="pill read">read</span></td><td class="mono">GET /sessions/:id</td><td class="mono">sessions</td><td>—</td></tr>
+            <tr><td class="mono">coven_read_output</td><td><span class="pill read">read</span></td><td class="mono">GET /sessions/:id/events</td><td class="mono">events</td><td>Bounded polling with signed resume tokens. The most complex component.</td></tr>
+            <tr><td class="mono">coven_list_memory</td><td><span class="pill read">read</span></td><td class="mono">GET /memory</td><td class="mono">—</td><td>A file lister, not search. Excerpts blank unless explicitly enabled.</td></tr>
+            <tr><td class="mono">coven_start_session</td><td><span class="pill write">write</span></td><td class="mono">POST /sessions</td><td class="mono">sessions</td><td>Canonicalizes <code>projectRoot</code> and <code>cwd</code>; requires <code>cwd</code> inside the root.</td></tr>
+            <tr><td class="mono">coven_send_input</td><td><span class="pill write">write</span></td><td class="mono">POST /sessions/:id/input</td><td class="mono">sessions</td><td>Fetches the authoritative record first. Data forwarded verbatim; no newline appended.</td></tr>
+            <tr><td class="mono">coven_kill_session</td><td><span class="pill destructive">destructive</span></td><td class="mono">POST /sessions/:id/kill</td><td class="mono">sessions</td><td>Same ownership rule as <code>send_input</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="security">
+      <h2>Security model</h2>
+      <p>The daemon has no authentication — trust is same-user access to a local Unix socket. An unguarded bridge would therefore hand an LLM the ability to spawn PTY processes anywhere on the machine. Narrowing that authority is the point of the project, not a feature of it.</p>
+      <h3>Controls</h3>
+      <ul class="plain">
+        <li><strong>Deny by default.</strong> An unset or empty allowlist means every write tool is denied.</li>
+        <li><strong>Fail-fast configuration.</strong> Any invalid allowlist entry aborts startup, naming the entry position but never its value.</li>
+        <li><strong>Authoritative record.</strong> <code>send_input</code> and <code>kill_session</code> authorize the daemon's own <code>project_root</code>, never a caller-supplied path.</li>
+        <li><strong>Component containment.</strong> Containment is path-component based after symlink resolution, so <code>/work/app2</code> is never inside <code>/work/app</code>.</li>
+        <li><strong>Fail closed.</strong> Missing paths, symlink escapes, dot-dot traversal, dead directories, and lookup failures all deny.</li>
+        <li><strong>Excerpt redaction.</strong> Memory excerpts are blank by default; <code>revealRequired</code> or any non-public classification forces redaction even when enabled.</li>
+        <li><strong>No sensitive logging.</strong> Prompts, input, output, excerpts, env values, tokens, and raw daemon bodies are never logged. Stdout is exclusively JSON-RPC.</li>
+      </ul>
+      <h3>What this explicitly does not guarantee</h3>
+      <ul class="plain deny">
+        <li>The allowlist is an authorization gate, <em>not</em> a process sandbox. A launched harness keeps full same-user OS authority.</li>
+        <li>Tool results are untrusted content with respect to prompt injection. Encoding is sanitized; meaning is not.</li>
+        <li>Resume tokens are integrity-protected but not encrypted, and carry un-emitted output state.</li>
+        <li>Anyone with same-user access can bypass coven-mcp by talking to the daemon directly.</li>
+      </ul>
+    </section>
+
+    <section id="pipeline">
+      <h2>Output pipeline</h2>
+      <p>Daemon events carry raw PTY bytes: ANSI escapes, carriage-return rewrites, C0 and C1 controls, lines split across events, and payloads double-encoded as JSON strings. Three modules turn that into text an LLM can read, without ever losing position.</p>
+      <h3>Sanitizer — <code>sanitizer.ts</code></h3>
+      <ul class="plain">
+        <li>Terminal state machine with eight states: ground, escape, charset, csi, osc, oscEsc, str, strEsc.</li>
+        <li>Emits only on a newline reached in ground state, so an escape sequence split across events can never leak.</li>
+        <li>Carriage return overwrites from the line start, so progress bars collapse to their final visible state.</li>
+        <li>Pending state is <strong>compacted</strong> — the current line buffer plus any in-progress escape — never accumulated raw history. Without this, a long-running progress bar would grow state without bound.</li>
+      </ul>
+      <h3>Resume token — <code>resume-token.ts</code></h3>
+      <p class="note"><code>base64url(payload).base64url(HMAC-SHA-256(payload))</code>, where payload is <code>{ v: 1, sessionId, afterSeq, pendingRawB64 }</code>. The secret is a random 256-bit value per process; pending state is UTF-16LE so a chunk split inside a surrogate pair survives. Tokens die with the process by design — recover with <code>afterSeq</code> set to the last observed <code>lastSeq</code>.</p>
+      <h3>Reader — <code>read-output.ts</code></h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">stopReason</th><th class="mono">complete</th><th class="mono">truncated</th><th class="mono">resumeToken</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">complete</td><td class="mono">true</td><td class="mono">false</td><td class="mono">null</td></tr>
+            <tr><td class="mono">timeout</td><td class="mono">false</td><td class="mono">false</td><td class="mono">non-null</td></tr>
+            <tr><td class="mono">maxBytes</td><td class="mono">false</td><td class="mono">true</td><td class="mono">non-null</td></tr>
+            <tr><td class="mono">pageLimit</td><td class="mono">false</td><td class="mono">true</td><td class="mono">non-null</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Invariants</h3>
+      <ul class="plain">
+        <li>An event is consumed only once its emitted text and pending state both fit the budget — try before commit.</li>
+        <li>A terminal session completes only after one further drain returns empty, so racing trailing output is never dropped.</li>
+        <li>An error never discards text already produced in the same call.</li>
+      </ul>
+    </section>
+
+    <section id="errors">
+      <h2>Error taxonomy</h2>
+      <p class="note">Failures return <code>isError: true</code> with a JSON body <code>{ code, message, retryable, details? }</code>. Branch on <code>code</code>, never on message text. Unmapped daemon codes fall through to <code>UPSTREAM_ERROR</code> rather than escaping as transport errors.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Code</th><th>Retryable</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">DAEMON_UNAVAILABLE</td><td><span class="pill yes">yes</span></td><td>Socket unreachable, or the request timed out.</td></tr>
+            <tr><td class="mono">CAPABILITY_UNAVAILABLE</td><td><span class="pill yes">yes</span></td><td>The daemon does not advertise a required capability.</td></tr>
+            <tr><td class="mono">UPSTREAM_ERROR</td><td><span class="pill yes">5xx · 429</span></td><td>Any other daemon error; carries the upstream code and status in safe details.</td></tr>
+            <tr><td class="mono">INCOMPATIBLE_DAEMON</td><td><span class="pill no">no</span></td><td>API version is not <code>coven.daemon.v1</code>.</td></tr>
+            <tr><td class="mono">SESSION_NOT_FOUND</td><td><span class="pill no">no</span></td><td>No session with that id.</td></tr>
+            <tr><td class="mono">SESSION_NOT_LIVE</td><td><span class="pill no">no</span></td><td>The session exists but is not running.</td></tr>
+            <tr><td class="mono">ROOT_NOT_ALLOWED</td><td><span class="pill no">no</span></td><td>Denied by <code>COVEN_MCP_ALLOWED_ROOTS</code>.</td></tr>
+            <tr><td class="mono">INVALID_INPUT</td><td><span class="pill no">no</span></td><td>Input failed validation, named by field.</td></tr>
+            <tr><td class="mono">INVALID_RESUME_TOKEN</td><td><span class="pill no">no</span></td><td>Token malformed, expired with the process, or bound to another session.</td></tr>
+            <tr><td class="mono">OUTPUT_STATE_TOO_LARGE</td><td><span class="pill no">no</span></td><td>Output exceeds the text or pending-state bounds; details carry a usable token.</td></tr>
+            <tr><td class="mono">INTERNAL_ERROR</td><td><span class="pill no">no</span></td><td>Unexpected failure or cancellation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="limits">
+      <h2>Limits and budgets</h2>
+      <p class="note">Every bound is explicit and enforced in code. Nothing in the request path is unbounded in bytes, pages, events, or time.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Constant</th><th class="num">Value</th><th>Applies to</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">MAX_BODY_BYTES</td><td class="num">4 MiB</td><td>Daemon request and response bodies</td></tr>
+            <tr><td class="mono">MAX_TEXT_BYTES</td><td class="num">1 MiB</td><td>Sanitized text per <code>read_output</code> call</td></tr>
+            <tr><td class="mono">MAX_TOKEN_BYTES</td><td class="num">64 KiB</td><td>Serialized resume token</td></tr>
+            <tr><td class="mono">MAX_PENDING_RAW_BYTES</td><td class="num">32 KiB</td><td>Decoded sanitizer pending state</td></tr>
+            <tr><td class="mono">MAX_CURSOR_BYTES</td><td class="num">4 KiB</td><td>Opaque session pagination cursor</td></tr>
+            <tr><td class="mono">MAX_PATH_BYTES</td><td class="num">4 KiB</td><td><code>projectRoot</code> and <code>cwd</code></td></tr>
+            <tr><td class="mono">PAGE_LIMIT</td><td class="num">100</td><td>Data pages per <code>read_output</code> call</td></tr>
+            <tr><td class="mono">EVENT_LIMIT</td><td class="num">10,000</td><td>Events consumed per <code>read_output</code> call</td></tr>
+            <tr><td class="mono">EVENTS_PAGE_SIZE</td><td class="num">100</td><td>Events requested per page</td></tr>
+            <tr><td class="mono">MAX_SESSION_LIMIT</td><td class="num">1,000</td><td><code>list_sessions</code> page-size ceiling</td></tr>
+            <tr><td class="mono">HEALTH_CACHE_TTL_MS</td><td class="num">1.5 s</td><td>Health gate cache, success and failure alike</td></tr>
+            <tr><td class="mono">POLL_INTERVAL_MS</td><td class="num">150 ms</td><td><code>read_output</code> idle poll interval</td></tr>
+            <tr><td class="mono">DEFAULT_CONNECT_TIMEOUT_MS</td><td class="num">2 s</td><td>Socket connect</td></tr>
+            <tr><td class="mono">DEFAULT_RESPONSE_TIMEOUT_MS</td><td class="num">5 s</td><td>Per request, also bounded by the call deadline</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="upstream">
+      <h2>Upstream contract</h2>
+      <p class="note">Pinned to <code>OpenCoven/coven</code> at <code>1fe9a744356ea3af6b47a3d497a483513b36eb15</code> (CLI 0.0.34). Six behaviors were verified against a live daemon rather than assumed from documentation — each is absorbed at a single boundary so it cannot leak into tool code.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Behavior</th><th class="mono">Absorbed by</th></tr></thead>
+          <tbody>
+            <tr><td>Requests are camelCase and session records reply snake_case — but the <em>events envelope</em> is camelCase while its event objects stay snake_case.</td><td class="mono">normalize.ts</td></tr>
+            <tr><td><code>payload_json</code> is a JSON <em>string</em> requiring a second parse.</td><td class="mono">read-output.ts</td></tr>
+            <tr><td>A fifth, undocumented event kind <code>kill</code> exists alongside output, input, status, exit.</td><td class="mono">read-output.ts</td></tr>
+            <tr><td><code>GET /sessions</code> returns a bare array without pagination params and an envelope with them; <code>GET /memory</code> is always a bare array.</td><td class="mono">normalize.ts</td></tr>
+            <tr><td>Health advertises string capabilities such as <code>eventCursor: "sequence"</code>, so a truthiness check would wrongly grant permission.</td><td class="mono">health-gate.ts</td></tr>
+            <tr><td>The daemon reports <code>covenVersion: "0.0.0"</code> even on a 0.0.34 install, so gating must use <code>apiVersion</code> and capabilities.</td><td class="mono">health-gate.ts</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="config">
+      <h2>Configuration</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Variable</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">COVEN_SOCKET</td><td>Explicit daemon socket path, overriding discovery.</td></tr>
+            <tr><td class="mono">COVEN_HOME</td><td>Coven home directory containing <code>coven.sock</code>.</td></tr>
+            <tr><td class="mono">COVEN_MCP_ALLOWED_ROOTS</td><td>Colon-separated absolute project roots permitting write tools. Unset or empty means read-only.</td></tr>
+            <tr><td class="mono">COVEN_MCP_INCLUDE_MEMORY_EXCERPTS</td><td>Exactly the literal <code>true</code> to forward bounded memory excerpts.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Discovery order: <code>COVEN_SOCKET</code> → <code>$COVEN_HOME/coven.sock</code> → <code>~/.coven/coven.sock</code>. Boolean variables recognize only the exact literal <code>true</code>.</p>
+    </section>
+
+    <section id="verification">
+      <h2>Verification</h2>
+      <p class="note"><code>npm run verify</code> requires no credentials, no running daemon, and no network. Contract tests bind a real HTTP server to a temporary Unix socket; <code>node:http</code> internals are never mocked.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Stage</th><th>Proves</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">typecheck</td><td>Strict TypeScript, no emit errors.</td></tr>
+            <tr><td class="mono">lint</td><td>Biome lint and format across src, test, and scripts.</td></tr>
+            <tr><td class="mono">test</td><td>137 unit and contract tests.</td></tr>
+            <tr><td class="mono">build</td><td>Production build yields a runnable entry point.</td></tr>
+            <tr><td class="mono">stdio smoke</td><td>Stdout purity, stable discovery with the daemon down, non-zero exit on misconfiguration.</td></tr>
+            <tr><td class="mono">package check</td><td>Tarball contents, shebang, bin, and engines.</td></tr>
+            <tr><td class="mono">docs check</td><td>Required README sections present, non-empty, and in order.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Test distribution</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">File</th><th class="num">Tests</th><th class="mono">File</th><th class="num">Tests</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">sanitizer</td><td class="num">23</td><td class="mono">allowlist</td><td class="num">10</td></tr>
+            <tr><td class="mono">read-output</td><td class="num">19</td><td class="mono">health-gate</td><td class="num">9</td></tr>
+            <tr><td class="mono">server-lifecycle</td><td class="num">14</td><td class="mono">server</td><td class="num">9</td></tr>
+            <tr><td class="mono">normalize</td><td class="num">13</td><td class="mono">server-read-output</td><td class="num">8</td></tr>
+            <tr><td class="mono">daemon-client</td><td class="num">12</td><td class="mono">server-memory</td><td class="num">4</td></tr>
+            <tr><td class="mono">resume-token</td><td class="num">12</td><td class="mono">socket-path</td><td class="num">4</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="deps">
+      <h2>Dependencies</h2>
+      <p class="note">Nothing is vendored. Two runtime dependencies, both MIT, both used unmodified.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="mono">Package</th><th class="mono">Range</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">@modelcontextprotocol/sdk</td><td class="mono">^1.30.0</td><td>MCP protocol and stdio transport.</td></tr>
+            <tr><td class="mono">zod</td><td class="mono">^4.4.3</td><td>Tool input schemas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Development only: <code>@biomejs/biome</code>, <code>@types/node</code>, <code>typescript</code>, <code>vitest</code>. The HTTP layer is <code>node:http</code> with <code>socketPath</code> — no HTTP dependency.</p>
+    </section>
+
+    <section id="nongoals">
+      <h2>Non-goals</h2>
+      <p class="note">Each exclusion has a reason, and the reason is upstream reality rather than time pressure.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Excluded</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Token-level streaming</td><td>No push transport on the daemon socket; <code>coven-relay</code> accepts the WebSocket upgrade and closes.</td></tr>
+            <tr><td>Windows support</td><td>Named-pipe transport is undocumented upstream.</td></tr>
+            <tr><td>Semantic memory search</td><td><code>coven-memory</code> is a separate binary unreachable over the socket.</td></tr>
+            <tr><td>Hub, scheduler, travel routes</td><td>Out of scope for v1.</td></tr>
+            <tr><td><code>POST /actions</code></td><td>Exactly one action id exists today.</td></tr>
+            <tr><td>Claims</td><td><code>coven claim</code> is CLI-only; there is no API route.</td></tr>
+            <tr><td>MCP resources and prompts</td><td>v1 is tools-only.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      coven-mcp v0.1.0 · MIT · generated 2026-08-04 · machine-readable companion: <code>docs/architecture.json</code>
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("themeBtn");
+    btn.addEventListener("click", function () {
+      var root = document.documentElement;
+      var dark = root.getAttribute("data-theme") === "dark" ||
+        (!root.hasAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      root.setAttribute("data-theme", dark ? "light" : "dark");
+    });
+
+    var links = Array.prototype.slice.call(document.querySelectorAll("#toc a"));
+    var sections = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+    if (!("IntersectionObserver" in window)) return;
+    var seen = new Map();
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { seen.set(e.target.id, e.intersectionRatio); });
+      var best = null, bestRatio = 0;
+      seen.forEach(function (ratio, id) { if (ratio > bestRatio) { bestRatio = ratio; best = id; } });
+      links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + best); });
+    }, { rootMargin: "-10% 0px -70% 0px", threshold: [0, 0.25, 0.5, 1] });
+    sections.forEach(function (s) { if (s) obs.observe(s); });
+  })();
+</script>

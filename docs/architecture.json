@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "coven-mcp",
+  "version": "0.1.0",
+  "generated": "2026-08-04",
+  "summary": "An MCP server that bridges the Coven daemon to any stdio-capable MCP client.",
+  "repository": "https://github.com/snowopsdev/coven-mcp",
+  "license": "MIT",
+
+  "runtime": {
+    "language": "TypeScript",
+    "moduleSystem": "ESM",
+    "node": ">=22",
+    "mcpTransport": "stdio",
+    "daemonTransport": "HTTP over Unix domain socket",
+    "daemonApiVersion": "coven.daemon.v1",
+    "networkListeners": "none",
+    "credentialsRequired": false
+  },
+
+  "upstream": {
+    "pinnedCommit": "1fe9a744356ea3af6b47a3d497a483513b36eb15",
+    "cliVersion": "0.0.34",
+    "socketDiscoveryOrder": ["COVEN_SOCKET", "$COVEN_HOME/coven.sock", "~/.coven/coven.sock"],
+    "quirks": [
+      {
+        "id": "mixed-casing",
+        "detail": "Requests are camelCase and session records reply snake_case, but the events envelope is camelCase (events, nextCursor, hasMore) while its event objects stay snake_case.",
+        "handledBy": "normalize.ts"
+      },
+      {
+        "id": "payload-json-is-a-string",
+        "detail": "Event payload_json is a JSON string requiring a second parse.",
+        "handledBy": "read-output.ts"
+      },
+      {
+        "id": "undocumented-kill-kind",
+        "detail": "A fifth event kind 'kill' exists alongside output, input, status, exit.",
+        "handledBy": "read-output.ts"
+      },
+      {
+        "id": "bare-array-responses",
+        "detail": "GET /sessions returns a bare array without pagination params and an envelope with them; GET /memory always returns a bare array.",
+        "handledBy": "normalize.ts"
+      },
+      {
+        "id": "string-valued-capabilities",
+        "detail": "Health advertises string capabilities such as eventCursor: 'sequence', so a truthiness check would wrongly grant permission.",
+        "handledBy": "health-gate.ts"
+      },
+      {
+        "id": "version-always-zero",
+        "detail": "The daemon reports covenVersion '0.0.0' even on a 0.0.34 install, so gating must use apiVersion and capabilities.",
+        "handledBy": "health-gate.ts"
+      }
+    ]
+  },
+
+  "modules": [
+    {
+      "file": "src/index.ts",
+      "loc": 42,
+      "layer": "entrypoint",
+      "role": "Process entrypoint. Resolves the socket path, parses the allowlist, fails fast on misconfiguration, wires the stdio transport, and handles SIGINT/SIGTERM shutdown.",
+      "dependsOn": ["allowlist", "server", "socket-path"]
+    },
+    {
+      "file": "src/server.ts",
+      "loc": 506,
+      "layer": "tool-surface",
+      "role": "Registers all nine MCP tools, validates inputs before any I/O, applies the health and allowlist gates, and shapes every result or structured error.",
+      "dependsOn": ["allowlist", "daemon-client", "errors", "health-gate", "normalize", "read-output", "resume-token"]
+    },
+    {
+      "file": "src/allowlist.ts",
+      "loc": 73,
+      "layer": "authorization",
+      "role": "Parses COVEN_MCP_ALLOWED_ROOTS, canonicalizes roots through symlinks, and enforces path-component containment. Fails the process on any invalid entry.",
+      "dependsOn": ["errors"]
+    },
+    {
+      "file": "src/health-gate.ts",
+      "loc": 120,
+      "layer": "gating",
+      "role": "Handshake gate run before every non-health call. Requires ok, the exact api version, and the named capability as literal true. Caches for 1.5s, single-flight.",
+      "dependsOn": ["errors"]
+    },
+    {
+      "file": "src/daemon-client.ts",
+      "loc": 186,
+      "layer": "transport",
+      "role": "HTTP over Unix socket. Connect and response timeouts, 4 MiB caps in both directions, abort propagation, and mapping of daemon error envelopes to structured errors.",
+      "dependsOn": ["errors"]
+    },
+    {
+      "file": "src/normalize.ts",
+      "loc": 329,
+      "layer": "boundary",
+      "role": "The single snake_case to camelCase boundary. Normalizes sessions, harness manifests, acks, and memory entries, and applies the memory excerpt redaction policy.",
+      "dependsOn": ["errors"]
+    },
+    {
+      "file": "src/read-output.ts",
+      "loc": 297,
+      "layer": "output-pipeline",
+      "role": "Bounded polling reader. Drains pages, guards against cursor regression, enforces byte/page/event/time budgets, and returns exactly one documented stop tuple.",
+      "dependsOn": ["errors", "resume-token", "sanitizer"]
+    },
+    {
+      "file": "src/sanitizer.ts",
+      "loc": 141,
+      "layer": "output-pipeline",
+      "role": "Streaming terminal state machine. Strips ANSI/C0/C1 sequences, applies carriage-return overwrite, and exports compacted parser state so resumes are lossless.",
+      "dependsOn": []
+    },
+    {
+      "file": "src/resume-token.ts",
+      "loc": 108,
+      "layer": "output-pipeline",
+      "role": "HMAC-SHA-256 signed continuation tokens over UTF-16LE pending state, bound to a session id, size-capped, and constant-time verified.",
+      "dependsOn": ["errors"]
+    },
+    {
+      "file": "src/errors.ts",
+      "loc": 31,
+      "layer": "foundation",
+      "role": "The CovenMcpError type and the closed set of eleven error codes every failure maps onto.",
+      "dependsOn": []
+    },
+    {
+      "file": "src/socket-path.ts",
+      "loc": 11,
+      "layer": "foundation",
+      "role": "Socket path resolution precedence.",
+      "dependsOn": []
+    }
+  ],
+
+  "tools": [
+    { "name": "coven_health", "authority": "read", "route": "GET /api/v1/health", "capability": null, "annotations": { "readOnlyHint": true }, "notes": "Never returns a tool error; an unreachable daemon is reported in the result body." },
+    { "name": "coven_list_harnesses", "authority": "read", "route": "GET /api/v1/capabilities/harnesses", "capability": null, "annotations": { "readOnlyHint": true }, "notes": "May disclose absolute harness manifest paths." },
+    { "name": "coven_list_sessions", "authority": "read", "route": "GET /api/v1/sessions", "capability": "sessions", "annotations": { "readOnlyHint": true }, "notes": "Normalizes both the bare array and the paginated envelope." },
+    { "name": "coven_get_session", "authority": "read", "route": "GET /api/v1/sessions/:id", "capability": "sessions", "annotations": { "readOnlyHint": true }, "notes": null },
+    { "name": "coven_read_output", "authority": "read", "route": "GET /api/v1/sessions/:id/events", "capability": "events", "annotations": { "readOnlyHint": true }, "notes": "Bounded polling with signed resume tokens; the project's most complex component." },
+    { "name": "coven_list_memory", "authority": "read", "route": "GET /api/v1/memory", "capability": null, "annotations": { "readOnlyHint": true }, "notes": "A file lister, not search. Excerpts blank unless explicitly enabled." },
+    { "name": "coven_start_session", "authority": "write", "route": "POST /api/v1/sessions", "capability": "sessions", "annotations": { "readOnlyHint": false }, "notes": "Canonicalizes projectRoot and cwd; requires cwd inside projectRoot." },
+    { "name": "coven_send_input", "authority": "write", "route": "POST /api/v1/sessions/:id/input", "capability": "sessions", "annotations": { "readOnlyHint": false }, "notes": "Fetches the authoritative record first. Data is forwarded verbatim; no newline appended." },
+    { "name": "coven_kill_session", "authority": "write", "route": "POST /api/v1/sessions/:id/kill", "capability": "sessions", "annotations": { "readOnlyHint": false, "destructiveHint": true }, "notes": "Same ownership rule as send_input." }
+  ],
+
+  "requestLifecycle": [
+    { "stage": 1, "name": "Schema validation", "where": "server.ts", "detail": "zod shape plus explicit byte, charset, and range checks. Failures return INVALID_INPUT before any I/O." },
+    { "stage": 2, "name": "Health and capability gate", "where": "health-gate.ts", "detail": "ok === true, apiVersion === coven.daemon.v1, required capability strictly true. 1.5s single-flight cache." },
+    { "stage": 3, "name": "Authorization", "where": "allowlist.ts", "detail": "Write tools only. Canonicalize, then path-component containment. Input and kill authorize the daemon's own record." },
+    { "stage": 4, "name": "Transport", "where": "daemon-client.ts", "detail": "HTTP over the Unix socket with timeouts, 4 MiB caps, and abort propagation." },
+    { "stage": 5, "name": "Normalization or output pipeline", "where": "normalize.ts / read-output.ts", "detail": "JSON becomes stable camelCase; PTY event streams are sanitized and tokenized." },
+    { "stage": 6, "name": "Result shaping", "where": "server.ts", "detail": "One JSON text content item, or isError with a structured CovenMcpError body." }
+  ],
+
+  "security": {
+    "trustModel": "The daemon has no authentication; trust is same-user access to a local Unix socket. coven-mcp narrows that authority before an LLM touches it.",
+    "defaultPosture": "read-only",
+    "writeGate": "COVEN_MCP_ALLOWED_ROOTS",
+    "controls": [
+      { "id": "deny-by-default", "detail": "Unset or empty allowlist means every write tool is denied." },
+      { "id": "fail-fast-config", "detail": "Any invalid allowlist entry aborts startup, naming the entry position but never its value." },
+      { "id": "authoritative-record", "detail": "send_input and kill_session authorize the daemon's own project_root, never a caller-supplied path." },
+      { "id": "component-containment", "detail": "Containment is path-component based after symlink resolution, so /work/app2 is never inside /work/app." },
+      { "id": "fail-closed", "detail": "Missing paths, symlink escapes, dot-dot traversal, dead directories, and lookup failures all deny." },
+      { "id": "excerpt-redaction", "detail": "Memory excerpts blank by default; revealRequired or any non-public classification forces redaction even when enabled." },
+      { "id": "no-sensitive-logging", "detail": "Prompts, input, output, excerpts, env values, tokens, and raw daemon bodies are never logged. Stdout is exclusively JSON-RPC." }
+    ],
+    "explicitNonGuarantees": [
+      "The allowlist is an authorization gate, not a process sandbox; a launched harness keeps full same-user OS authority.",
+      "Tool results are untrusted content with respect to prompt injection. Encoding is sanitized; meaning is not.",
+      "Resume tokens are integrity-protected but not encrypted, and carry un-emitted output state.",
+      "Anyone with same-user access can bypass coven-mcp by talking to the daemon directly."
+    ]
+  },
+
+  "outputPipeline": {
+    "problem": "Daemon events carry raw PTY bytes: ANSI escapes, carriage-return rewrites, C0/C1 controls, lines split across events, and payloads double-encoded as JSON strings.",
+    "sanitizer": {
+      "model": "Terminal state machine with eight states (ground, escape, charset, csi, osc, oscEsc, str, strEsc).",
+      "emitsOn": "newline reached in ground state, so a split escape sequence can never leak",
+      "carriageReturn": "overwrite from line start, so progress bars collapse to their final visible state",
+      "pendingState": "compacted (current line buffer plus any in-progress escape), never accumulated raw history",
+      "dropped": ["C0 controls except tab", "DEL", "C1 controls"]
+    },
+    "resumeToken": {
+      "format": "base64url(payload).base64url(HMAC-SHA-256(payload))",
+      "payload": { "v": 1, "sessionId": "string", "afterSeq": "number | null", "pendingRawB64": "UTF-16LE bytes" },
+      "secret": "random 256-bit, per process",
+      "encrypted": false,
+      "restartBehavior": "intentionally invalid after restart; recover with afterSeq = last observed lastSeq"
+    },
+    "stopTuples": [
+      { "stopReason": "complete", "complete": true, "truncated": false, "resumeToken": null },
+      { "stopReason": "timeout", "complete": false, "truncated": false, "resumeToken": "non-null" },
+      { "stopReason": "maxBytes", "complete": false, "truncated": true, "resumeToken": "non-null" },
+      { "stopReason": "pageLimit", "complete": false, "truncated": true, "resumeToken": "non-null" }
+    ],
+    "invariants": [
+      "An event is consumed only after its emitted text and pending state both fit the budget (try-before-commit).",
+      "A terminal session completes only after one further drain returns empty, so racing trailing output is not dropped.",
+      "An error never discards text already produced in the same call."
+    ]
+  },
+
+  "errorCodes": [
+    { "code": "DAEMON_UNAVAILABLE", "retryable": true, "meaning": "Socket unreachable, or the request timed out." },
+    { "code": "CAPABILITY_UNAVAILABLE", "retryable": true, "meaning": "The daemon does not advertise a required capability." },
+    { "code": "UPSTREAM_ERROR", "retryable": "5xx and 429 only", "meaning": "Any other daemon error; carries the upstream code and status in safe details." },
+    { "code": "INCOMPATIBLE_DAEMON", "retryable": false, "meaning": "API version is not coven.daemon.v1." },
+    { "code": "SESSION_NOT_FOUND", "retryable": false, "meaning": "No session with that id." },
+    { "code": "SESSION_NOT_LIVE", "retryable": false, "meaning": "The session exists but is not running." },
+    { "code": "ROOT_NOT_ALLOWED", "retryable": false, "meaning": "Denied by COVEN_MCP_ALLOWED_ROOTS." },
+    { "code": "INVALID_INPUT", "retryable": false, "meaning": "Input failed validation, named by field." },
+    { "code": "INVALID_RESUME_TOKEN", "retryable": false, "meaning": "Token malformed, expired with the process, or bound to another session." },
+    { "code": "OUTPUT_STATE_TOO_LARGE", "retryable": false, "meaning": "Output exceeds the text or pending-state bounds; details carry a usable token." },
+    { "code": "INTERNAL_ERROR", "retryable": false, "meaning": "Unexpected failure or cancellation." }
+  ],
+
+  "limits": [
+    { "name": "MAX_BODY_BYTES", "value": 4194304, "display": "4 MiB", "applies": "daemon request and response bodies" },
+    { "name": "MAX_TEXT_BYTES", "value": 1048576, "display": "1 MiB", "applies": "sanitized text per read_output call" },
+    { "name": "MAX_TOKEN_BYTES", "value": 65536, "display": "64 KiB", "applies": "serialized resume token" },
+    { "name": "MAX_PENDING_RAW_BYTES", "value": 32768, "display": "32 KiB", "applies": "decoded sanitizer pending state" },
+    { "name": "MAX_CURSOR_BYTES", "value": 4096, "display": "4 KiB", "applies": "opaque session pagination cursor" },
+    { "name": "MAX_PATH_BYTES", "value": 4096, "display": "4 KiB", "applies": "projectRoot and cwd" },
+    { "name": "PAGE_LIMIT", "value": 100, "display": "100 pages", "applies": "data pages per read_output call" },
+    { "name": "EVENT_LIMIT", "value": 10000, "display": "10,000 events", "applies": "events consumed per read_output call" },
+    { "name": "EVENTS_PAGE_SIZE", "value": 100, "display": "100", "applies": "events requested per page" },
+    { "name": "MAX_SESSION_LIMIT", "value": 1000, "display": "1,000", "applies": "list_sessions page size ceiling" },
+    { "name": "DEFAULT_SESSION_LIMIT", "value": 100, "display": "100", "applies": "list_sessions default page size" },
+    { "name": "HEALTH_CACHE_TTL_MS", "value": 1500, "display": "1.5 s", "applies": "health gate cache, success and failure alike" },
+    { "name": "POLL_INTERVAL_MS", "value": 150, "display": "150 ms", "applies": "read_output idle poll interval" },
+    { "name": "DEFAULT_CONNECT_TIMEOUT_MS", "value": 2000, "display": "2 s", "applies": "socket connect" },
+    { "name": "DEFAULT_RESPONSE_TIMEOUT_MS", "value": 5000, "display": "5 s", "applies": "per-request response, also bounded by the call deadline" }
+  ],
+
+  "configuration": [
+    { "variable": "COVEN_SOCKET", "purpose": "Explicit daemon socket path, overriding discovery.", "required": false },
+    { "variable": "COVEN_HOME", "purpose": "Coven home directory containing coven.sock.", "required": false },
+    { "variable": "COVEN_MCP_ALLOWED_ROOTS", "purpose": "Colon-separated absolute project roots permitting write tools. Unset or empty means read-only.", "required": false },
+    { "variable": "COVEN_MCP_INCLUDE_MEMORY_EXCERPTS", "purpose": "Exactly the literal 'true' to forward bounded memory excerpts.", "required": false }
+  ],
+
+  "verification": {
+    "command": "npm run verify",
+    "requiresCredentials": false,
+    "requiresDaemon": false,
+    "requiresNetwork": false,
+    "totalTests": 137,
+    "testFiles": [
+      { "file": "src/sanitizer.test.ts", "tests": 23 },
+      { "file": "src/read-output.test.ts", "tests": 19 },
+      { "file": "src/server-lifecycle.test.ts", "tests": 14 },
+      { "file": "src/normalize.test.ts", "tests": 13 },
+      { "file": "src/daemon-client.test.ts", "tests": 12 },
+      { "file": "src/resume-token.test.ts", "tests": 12 },
+      { "file": "src/allowlist.test.ts", "tests": 10 },
+      { "file": "src/health-gate.test.ts", "tests": 9 },
+      { "file": "src/server.test.ts", "tests": 9 },
+      { "file": "src/server-read-output.test.ts", "tests": 8 },
+      { "file": "src/server-memory.test.ts", "tests": 4 },
+      { "file": "src/socket-path.test.ts", "tests": 4 }
+    ],
+    "stages": [
+      { "stage": "typecheck", "proves": "Strict TypeScript, no emit errors." },
+      { "stage": "lint", "proves": "Biome lint and format across src, test, and scripts." },
+      { "stage": "test", "proves": "137 unit and contract tests against a real HTTP server on a temporary Unix socket." },
+      { "stage": "build", "proves": "Production build yields a runnable entry point." },
+      { "stage": "stdio smoke", "proves": "Stdout purity, stable discovery with the daemon down, non-zero exit on misconfiguration." },
+      { "stage": "package check", "proves": "Tarball contents, shebang, bin, and engines." },
+      { "stage": "docs check", "proves": "Required README sections present, non-empty, and in the submission guide's order." }
+    ],
+    "supportingScripts": [
+      { "file": "scripts/demo.mjs", "role": "Deterministic demo against a scripted stand-in daemon." },
+      { "file": "scripts/stdio-smoke.mjs", "role": "Raw JSON-RPC smoke test of the built binary." },
+      { "file": "scripts/check-package.mjs", "role": "Tarball and packaging assertions." },
+      { "file": "scripts/check-docs.mjs", "role": "README section presence and ordering." },
+      { "file": "scripts/freeze-preflight.mjs", "role": "Submission readiness gate." },
+      { "file": "test/helpers/fake-daemon.ts", "role": "Real HTTP server bound to a temporary Unix socket." }
+    ]
+  },
+
+  "dependencies": {
+    "runtime": [
+      { "name": "@modelcontextprotocol/sdk", "range": "^1.30.0", "license": "MIT", "role": "MCP protocol and stdio transport." },
+      { "name": "zod", "range": "^4.4.3", "license": "MIT", "role": "Tool input schemas." }
+    ],
+    "development": ["@biomejs/biome", "@types/node", "typescript", "vitest"],
+    "vendored": []
+  },
+
+  "nonGoals": [
+    { "item": "Token-level streaming", "reason": "No push transport exists on the daemon socket; coven-relay accepts the WebSocket upgrade and closes." },
+    { "item": "Windows support", "reason": "Named-pipe transport is undocumented upstream." },
+    { "item": "Semantic memory search", "reason": "coven-memory is a separate binary unreachable over the socket." },
+    { "item": "Hub, scheduler, and travel routes", "reason": "Out of scope for v1." },
+    { "item": "POST /actions", "reason": "Exactly one action id exists today." },
+    { "item": "Claims", "reason": "coven claim is CLI-only; there is no API route." },
+    { "item": "MCP resources and prompts", "reason": "v1 is tools-only." }
+  ],
+
+  "metrics": {
+    "sourceModules": 11,
+    "sourceLoc": 1844,
+    "testFiles": 12,
+    "tests": 137,
+    "tools": 9,
+    "errorCodes": 11,
+    "commits": 24
+  }
+}
