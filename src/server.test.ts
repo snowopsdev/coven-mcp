@@ -2,7 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, test } from "vitest";
 import { type FakeDaemon, jsonHandler, startFakeDaemon } from "../test/helpers/fake-daemon.js";
-import { createScryServer } from "./server.js";
+import { createCovenMcpServer } from "./server.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -40,9 +40,9 @@ const UPSTREAM_SESSION = {
 };
 
 async function connectClient(socketPath: string): Promise<Client> {
-  const server = createScryServer({ socketPath });
+  const server = createCovenMcpServer({ socketPath });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const c = new Client({ name: "scry-test", version: "0.0.0" });
+  const c = new Client({ name: "coven-mcp-test", version: "0.0.0" });
   await Promise.all([c.connect(clientTransport), server.connect(serverTransport)]);
   client = c;
   return c;
@@ -55,9 +55,9 @@ function resultJson(result: unknown): unknown {
   return JSON.parse(content[0]!.text);
 }
 
-describe("scry MCP server — Checkpoint A", () => {
+describe("coven-mcp server — Checkpoint A", () => {
   test("lists the read tools with the daemon stopped, all marked read-only", async () => {
-    const c = await connectClient("/nonexistent/scry/no.sock");
+    const c = await connectClient("/nonexistent/coven-mcp/no.sock");
     const { tools } = await c.listTools();
     const names = tools.map((t) => t.name);
     const readTools = ["coven_health", "coven_list_harnesses", "coven_list_sessions"];
@@ -69,7 +69,7 @@ describe("scry MCP server — Checkpoint A", () => {
   });
 
   test("coven_health with the daemon stopped is a diagnostic result, not a tool error", async () => {
-    const c = await connectClient("/nonexistent/scry/no.sock");
+    const c = await connectClient("/nonexistent/coven-mcp/no.sock");
     const result = await c.callTool({ name: "coven_health", arguments: {} });
     expect(result.isError ?? false).toBe(false);
     expect(resultJson(result)).toMatchObject({
@@ -126,7 +126,7 @@ describe("scry MCP server — Checkpoint A", () => {
   });
 
   test("coven_list_sessions fails closed as a structured tool error when the daemon is down", async () => {
-    const c = await connectClient("/nonexistent/scry/no.sock");
+    const c = await connectClient("/nonexistent/coven-mcp/no.sock");
     const result = await c.callTool({ name: "coven_list_sessions", arguments: {} });
     expect(result.isError).toBe(true);
     expect(resultJson(result)).toMatchObject({ code: "DAEMON_UNAVAILABLE", retryable: true });

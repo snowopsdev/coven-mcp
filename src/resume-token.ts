@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 
 /**
  * Signed resume tokens (PRD FR-17): base64url(payload JSON) + "." +
@@ -25,8 +25,8 @@ export type TokenCodec = {
   decode(token: string, expectedSessionId: string): TokenState;
 };
 
-function invalid(reason: string): ScryError {
-  return new ScryError("INVALID_RESUME_TOKEN", `Resume token rejected: ${reason}`, false, {
+function invalid(reason: string): CovenMcpError {
+  return new CovenMcpError("INVALID_RESUME_TOKEN", `Resume token rejected: ${reason}`, false, {
     reason,
   });
 }
@@ -45,8 +45,8 @@ export function createTokenCodec(secret: Buffer = randomBytes(32)): TokenCodec {
       const pendingBytes = Buffer.from(state.pendingRaw, "utf16le");
       if (pendingBytes.length > MAX_PENDING_RAW_BYTES) {
         // The reader must stop before state grows past the bound (FR-18);
-        // reaching this is a scry bug, not a user error.
-        throw new ScryError("INTERNAL_ERROR", "Resume state exceeded its bound", false);
+        // reaching this is a bug in this server, not a user error.
+        throw new CovenMcpError("INTERNAL_ERROR", "Resume state exceeded its bound", false);
       }
       // Key order is fixed so the signed bytes are canonical.
       const payload = JSON.stringify({

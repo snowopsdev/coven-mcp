@@ -1,4 +1,4 @@
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 import { MAX_PENDING_RAW_BYTES, type TokenCodec } from "./resume-token.js";
 import { createSanitizer, type Sanitizer } from "./sanitizer.js";
 
@@ -65,8 +65,8 @@ const TERMINAL_STATUSES = new Set([
 type RawEvent = { seq: number; kind: string; payloadJson: string | undefined };
 type EventsPage = { events: RawEvent[]; hasMore: boolean };
 
-function contractError(kind: string, message: string): ScryError {
-  return new ScryError("UPSTREAM_ERROR", message, false, { kind });
+function contractError(kind: string, message: string): CovenMcpError {
+  return new CovenMcpError("UPSTREAM_ERROR", message, false, { kind });
 }
 
 function normalizeEventsPage(raw: unknown): EventsPage {
@@ -129,7 +129,11 @@ export async function readOutput(
   const diagnostics = { malformedPayloads: 0, unknownEvents: 0 };
 
   if (params.afterSeq !== undefined && params.resumeToken !== undefined) {
-    throw new ScryError("INVALID_INPUT", "afterSeq and resumeToken are mutually exclusive", false);
+    throw new CovenMcpError(
+      "INVALID_INPUT",
+      "afterSeq and resumeToken are mutually exclusive",
+      false,
+    );
   }
 
   let afterSeq: number | null;
@@ -198,7 +202,7 @@ export async function readOutput(
 
   const checkAbort = (): void => {
     if (params.signal?.aborted) {
-      throw new ScryError("INTERNAL_ERROR", "Request cancelled", false);
+      throw new CovenMcpError("INTERNAL_ERROR", "Request cancelled", false);
     }
   };
 
@@ -246,7 +250,7 @@ export async function readOutput(
             const fitsFresh =
               emittedBytes <= MAX_TEXT_BYTES && pendingBytes <= MAX_PENDING_RAW_BYTES;
             if (!fitsFresh && textBytes === 0) {
-              throw new ScryError(
+              throw new CovenMcpError(
                 "OUTPUT_STATE_TOO_LARGE",
                 "Session output exceeds the maximum text or pending-state bounds",
                 false,

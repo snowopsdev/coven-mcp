@@ -1,4 +1,4 @@
-export type ScryErrorCode =
+export type CovenMcpErrorCode =
   | "SESSION_NOT_FOUND"
   | "SESSION_NOT_LIVE"
   | "DAEMON_UNAVAILABLE"
@@ -11,19 +11,19 @@ export type ScryErrorCode =
   | "UPSTREAM_ERROR"
   | "INTERNAL_ERROR";
 
-export class ScryError extends Error {
-  readonly code: ScryErrorCode;
+export class CovenMcpError extends Error {
+  readonly code: CovenMcpErrorCode;
   readonly retryable: boolean;
   readonly details: Record<string, unknown> | undefined;
 
   constructor(
-    code: ScryErrorCode,
+    code: CovenMcpErrorCode,
     message: string,
     retryable: boolean,
     details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = "ScryError";
+    this.name = "CovenMcpError";
     this.code = code;
     this.retryable = retryable;
     this.details = details;

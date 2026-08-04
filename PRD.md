@@ -1,4 +1,4 @@
-# PRD — `scry`
+# PRD — `coven-mcp`
 
 **An MCP server that bridges the Coven daemon to any stdio-capable MCP client.**
 
@@ -24,9 +24,9 @@ The consequence: a developer already working inside Claude Desktop, Cursor, or a
 
 ## 2. Solution
 
-A standalone MCP server, `scry`, that exposes the Coven daemon as MCP tools over stdio. Point any stdio-capable MCP client at it and Coven's sessions, harnesses, output, and memory listing become first-class tools in that client — with no changes to Coven itself.
+A standalone MCP server, `coven-mcp`, that exposes the Coven daemon as MCP tools over stdio. Point any stdio-capable MCP client at it and Coven's sessions, harnesses, output, and memory listing become first-class tools in that client — with no changes to Coven itself.
 
-**Positioning:** additive, not duplicative. `scry` does not compete with `coven-reach`'s filesystem/web tools or `coven-codeflow`'s MCP client. It adapts the existing local daemon contract into lifecycle and observability tools. `coven-familiar-spec` lists an MCP server registry as intent; `coven-harness-capabilities` lists cross-harness MCP exposure as an explicit current non-goal.
+**Positioning:** additive, not duplicative. `coven-mcp` does not compete with `coven-reach`'s filesystem/web tools or `coven-codeflow`'s MCP client. It adapts the existing local daemon contract into lifecycle and observability tools. `coven-familiar-spec` lists an MCP server registry as intent; `coven-harness-capabilities` lists cross-harness MCP exposure as an explicit current non-goal.
 
 ## 3. Users
 
@@ -102,7 +102,7 @@ Write-gated tools are marked **[W]** and require allowlist approval (§6.4). All
 | `coven_list_memory` | — | `GET /memory` | `{ entries }`; excerpts blank by default and available only under the policy below |
 
 - **FR-8** — Every tool description MUST state its authority level, side effects, and whether it can expose local metadata/content. The description is the LLM's primary signal about what a tool does. Tools also declare MCP tool annotations: `readOnlyHint: true` on the six read tools, and `destructiveHint: true` on `coven_kill_session`. Annotations are advisory hints, never a substitute for the §6.4 allowlist.
-- **FR-9** — `coven_list_memory` MUST be documented as a **file lister, not search or full-content read**. The daemon route enumerates Markdown files and includes a bounded excerpt (currently the first paragraph, up to 200 characters), so blindly forwarding it is content disclosure. `scry` blanks excerpts by default. Only `SCRY_INCLUDE_MEMORY_EXCERPTS=true` enables forwarding, and `revealRequired === true` or any non-null classification other than `public` still forces a blank excerpt with `excerptRedacted: true`. `excerptRedacted` is `true` exactly when `scry` blanked a non-empty daemon-provided excerpt (default-off mode or forced redaction); it is `false` when the daemon itself returned an empty excerpt or the excerpt was forwarded. The route has no query capability; do not advertise unsupported `familiarId` or `limit` filters.
+- **FR-9** — `coven_list_memory` MUST be documented as a **file lister, not search or full-content read**. The daemon route enumerates Markdown files and includes a bounded excerpt (currently the first paragraph, up to 200 characters), so blindly forwarding it is content disclosure. `coven-mcp` blanks excerpts by default. Only `COVEN_MCP_INCLUDE_MEMORY_EXCERPTS=true` enables forwarding, and `revealRequired === true` or any non-null classification other than `public` still forces a blank excerpt with `excerptRedacted: true`. `excerptRedacted` is `true` exactly when `coven-mcp` blanked a non-empty daemon-provided excerpt (default-off mode or forced redaction); it is `false` when the daemon itself returned an empty excerpt or the excerpt was forwarded. The route has no query capability; do not advertise unsupported `familiarId` or `limit` filters.
 - **FR-10** — Validate every tool input before I/O: reject unknown fields, strings outside their stated size bounds, non-integer cursors/limits, invalid timeout/byte bounds, NUL bytes, and malformed session ids. Validation failures return the `INVALID_INPUT` error (§6.5) naming the offending field and constraint, never echoing oversized or binary values. Never interpolate an unencoded id into a route.
 
 Stable normalized shapes (additive optional fields are allowed):
@@ -116,7 +116,7 @@ type HealthResult = {
   apiVersion?: string;
   covenVersion?: string;
   capabilities?: HealthCapabilities;
-  error?: ScryToolError;
+  error?: CovenMcpToolError;
 };
 
 type SessionRecord = {
@@ -209,7 +209,7 @@ type MemoryEntry = {
   verificationState: string;
 };
 
-type ScryToolError = {
+type CovenMcpToolError = {
   code: string;
   message: string;
   retryable: boolean;
@@ -247,7 +247,7 @@ The table maps to these exact wrappers: `coven_health → HealthResult`, `coven_
 
 `coven_list_sessions.limit` defaults to 100 and is constrained to 1–1000; `includeArchived` defaults to `false`; `cursor` is the opaque upstream string and is capped at 4 KiB. `timeoutMs` defaults to 30,000 and is constrained to 0–120,000; `maxBytes` defaults to 1 MiB and is constrained to 64 KiB–1 MiB. `afterSeq` is a non-negative safe integer. `afterSeq` and `resumeToken` are mutually exclusive. A `resumeToken` is capped at 64 KiB, and the complete serialized `coven_read_output` result is capped at 4 MiB.
 
-String bounds are UTF-8 bytes: `sessionId` 1–256 and limited to `[A-Za-z0-9._:-]`; `harness` 1–128 and limited to `[A-Za-z0-9._-]`; `projectRoot`/`cwd` 1–4096; `model` 1–256; `title` 0–512; `prompt` and `data` 1 byte–1 MiB. The fully serialized POST body must also remain below 4 MiB. All strings reject NUL; filesystem paths are additionally validated by §6.4. `coven_send_input.data` is forwarded to the PTY **verbatim**: `scry` never appends a newline or otherwise rewrites it, and the tool description states that callers must include a trailing newline when they intend to submit a line.
+String bounds are UTF-8 bytes: `sessionId` 1–256 and limited to `[A-Za-z0-9._:-]`; `harness` 1–128 and limited to `[A-Za-z0-9._-]`; `projectRoot`/`cwd` 1–4096; `model` 1–256; `title` 0–512; `prompt` and `data` 1 byte–1 MiB. The fully serialized POST body must also remain below 4 MiB. All strings reject NUL; filesystem paths are additionally validated by §6.4. `coven_send_input.data` is forwarded to the PTY **verbatim**: `coven-mcp` never appends a newline or otherwise rewrites it, and the tool description states that callers must include a trailing newline when they intend to submit a line.
 
 For `coven_list_sessions`, build query parameters with `URLSearchParams`: always send decimal `limit` (100 when omitted), send `includeArchived` as lowercase `true`/`false`, and include the opaque `cursor` only when provided. This deliberately selects the upstream paginated envelope; the parser still accepts the legacy bare array in contract fixtures and normalizes it with `nextCursor: null` and `hasMore: false`.
 
@@ -277,36 +277,36 @@ The hardest component. Requirements derived from the documented API and source-v
 
 ### 6.4 Security — authority boundary
 
-The daemon has **no authentication**. Trust is same-user local socket access. `scry` therefore inherits full same-user authority: anything exposed to an LLM can spawn PTY processes in arbitrary project roots.
+The daemon has **no authentication**. Trust is same-user local socket access. `coven-mcp` therefore inherits full same-user authority: anything exposed to an LLM can spawn PTY processes in arbitrary project roots.
 
-- **FR-21** — `SCRY_ALLOWED_ROOTS` (colon-separated absolute paths on supported Unix platforms) gates all **[W]** tools.
-- **FR-22** — **Unset or empty ⇒ read-only mode.** Deny by default. Never open by default. Boolean-valued `SCRY_*` variables (e.g. `SCRY_INCLUDE_MEMORY_EXCERPTS`) recognize only the exact literal `true` as enabled; every other value, including `1`, `TRUE`, and `yes`, is treated as disabled.
+- **FR-21** — `COVEN_MCP_ALLOWED_ROOTS` (colon-separated absolute paths on supported Unix platforms) gates all **[W]** tools.
+- **FR-22** — **Unset or empty ⇒ read-only mode.** Deny by default. Never open by default. Boolean-valued `COVEN_MCP_*` variables (e.g. `COVEN_MCP_INCLUDE_MEMORY_EXCERPTS`) recognize only the exact literal `true` as enabled; every other value, including `1`, `TRUE`, and `yes`, is treated as disabled.
 - **FR-23** — At startup/config parse, require allowlist roots to be absolute existing directories and canonicalize them. Containment uses path components, not raw string prefixes. If **any** allowlist entry is relative, missing, not a directory, or fails canonicalization, the server exits non-zero at startup with a metadata-only stderr message naming the offending entry's position (not silently dropping it or degrading to read-only) — a misconfigured allowlist must be loud, never partially honored.
 - **FR-24** — For `coven_start_session`, canonicalize `projectRoot` and optional `cwd`; require both to remain within an allowed root and require `cwd` to remain within `projectRoot`. Reject traversal, missing paths, non-directories, and symlink escapes.
 - **FR-25** — For `coven_send_input` and `coven_kill_session`, first fetch the authoritative session record and authorize its canonical `project_root`. Never accept or trust a caller-supplied project root. A missing/malformed root, failed lookup, failed canonicalization, or disallowed root denies the mutation.
-- **FR-26** — Denials return a clear MCP tool error naming `SCRY_ALLOWED_ROOTS` and the denied operation, without echoing prompts, input data, or sensitive output.
-- **FR-27** — Read tools remain available without an allowlist, but their descriptions and README threat model state that session titles/project paths, event output, harness-manifest paths (which may be absolute), memory paths/titles, and bounded memory excerpts may be disclosed to the connected MCP client/LLM. The threat model MUST also cover **prompt injection**: session output, titles, and memory excerpts are untrusted content that may contain instructions aimed at the consuming LLM. `scry` sanitizes encoding (ANSI/CR), not semantics — it never embeds returned content in its own tool descriptions or error messages, and README instructs users that tool results are data, not instructions.
+- **FR-26** — Denials return a clear MCP tool error naming `COVEN_MCP_ALLOWED_ROOTS` and the denied operation, without echoing prompts, input data, or sensitive output.
+- **FR-27** — Read tools remain available without an allowlist, but their descriptions and README threat model state that session titles/project paths, event output, harness-manifest paths (which may be absolute), memory paths/titles, and bounded memory excerpts may be disclosed to the connected MCP client/LLM. The threat model MUST also cover **prompt injection**: session output, titles, and memory excerpts are untrusted content that may contain instructions aimed at the consuming LLM. `coven-mcp` sanitizes encoding (ANSI/CR), not semantics — it never embeds returned content in its own tool descriptions or error messages, and README instructs users that tool results are data, not instructions.
 - **FR-28** — The allowlist is an MCP authorization gate, not a process/filesystem sandbox. A harness started in an allowed root retains the user's broader same-user OS authority; this residual risk MUST be explicit in tool descriptions and README.
 - **FR-29** — Never log prompt content, input data, session output, memory excerpts/content, environment values, raw resume tokens, or raw daemon error details. README MUST carry the complete threat model under "Security and privacy."
 
 ### 6.5 Error handling
 
 - **FR-30** — Branch on `error.code`, never `error.message`. Preserve HTTP status and safe structured details for diagnostics, but never expose a raw daemon body.
-- **FR-31** — Except for `coven_health`'s diagnostic behavior in FR-2, tool failures return an MCP `CallToolResult` with `isError: true` and one JSON text content item matching `ScryToolError`; expected daemon/user failures are not JSON-RPC transport errors. Required mappings:
+- **FR-31** — Except for `coven_health`'s diagnostic behavior in FR-2, tool failures return an MCP `CallToolResult` with `isError: true` and one JSON text content item matching `CovenMcpToolError`; expected daemon/user failures are not JSON-RPC transport errors. Required mappings:
 
-| Condition | HTTP | Scry code | Retryable | Message contract |
+| Condition | HTTP | coven-mcp code | Retryable | Message contract |
 | --- | --- | --- | --- | --- |
 | `session_not_found` | 404 | `SESSION_NOT_FOUND` | false | "No session with id X" |
 | `session_not_live` | 409 | `SESSION_NOT_LIVE` | false | "Session X exists but is not live" |
 | unreachable socket | — | `DAEMON_UNAVAILABLE` | true | "Daemon not running — start with `coven daemon start`" |
 | version mismatch | — | `INCOMPATIBLE_DAEMON` | false | "Requires coven.daemon.v1, found Y" |
 | required capability absent | — | `CAPABILITY_UNAVAILABLE` | true | Names the required capability |
-| allowlist denial | — | `ROOT_NOT_ALLOWED` | false | Names `SCRY_ALLOWED_ROOTS` and the operation, not sensitive input |
+| allowlist denial | — | `ROOT_NOT_ALLOWED` | false | Names `COVEN_MCP_ALLOWED_ROOTS` and the operation, not sensitive input |
 | invalid resume token | — | `INVALID_RESUME_TOKEN` | false | Names the validation reason category, never token contents |
 | output state exceeds bound | — | `OUTPUT_STATE_TOO_LARGE` | false | Returns the prior valid token in safe structured details |
 | tool input fails §6.2 validation | — | `INVALID_INPUT` | false | Names the field and violated constraint, never echoes oversized/binary values |
 | any other daemon error envelope | varies | `UPSTREAM_ERROR` | true only for 5xx/429 | Carries the upstream `error.code` and HTTP status in safe details, never the raw body |
-| unexpected `scry` failure | — | `INTERNAL_ERROR` | false | Generic message; no stack traces or internal state |
+| unexpected `coven-mcp` failure | — | `INTERNAL_ERROR` | false | Generic message; no stack traces or internal state |
 
 The daemon documents ~35 stable error codes; the named rows above are the only ones with bespoke handling, and every other code MUST fall through to `UPSTREAM_ERROR` rather than being dropped, re-thrown as a transport error, or matched by message text.
 
@@ -378,7 +378,7 @@ Not met ⇒ **descope immediately** to the Familiar Contract validator per `PLAN
 1. **BLOCKING FOR SUBMISSION, NOT BUILD — official brief unavailable.** The documented `OpenCoven/opencoven-beta-july-hackathon-2026` repository/submission URL was not accessible during this review. Reconfirm the deadline, tag, required README content, license/DCO rules, scoring, and submission form before Block 8.
 2. The local `GET /api/v1/memory` response currently contains zero entries. Seed a non-sensitive demo fixture through supported Coven behavior, or deliberately demonstrate an honest empty result; never open the memory database directly.
 3. Does `coven doctor` confirm at least one authenticated harness for the live write demo? Harness capability discovery alone does not prove provider authentication.
-4. Publish to npm, or repo-only? **Resolved Aug 4:** `scry-mcp` is unavailable — an unrelated Solana-wallet MCP server published under that name on 2026-07-06 — and plain `scry` has been taken since 2013. The package and repository are therefore named `coven-mcp`, which is free on npm and GitHub. Whether to actually publish remains open; publishing strengthens reproducibility and costs ~30 min. Either choice still requires a compiled entry point and clean-clone package smoke test.
+4. Publish to npm, or repo-only? **Resolved Aug 4:** @@@ is unavailable — an unrelated Solana-wallet MCP server published under that name on 2026-07-06 — and @@@. The package and repository are therefore named `coven-mcp`, which is free on npm and GitHub. Whether to actually publish remains open; publishing strengthens reproducibility and costs ~30 min. Either choice still requires a compiled entry point and clean-clone package smoke test.
 
 ## 12. Out of scope for v1 — the "next steps" list
 

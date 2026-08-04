@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 
 const entry = new URL("../dist/index.js", import.meta.url).pathname;
 const child = spawn(process.execPath, [entry], {
-  env: { ...process.env, COVEN_SOCKET: "/nonexistent/scry-smoke/no.sock" },
+  env: { ...process.env, COVEN_SOCKET: "/nonexistent/coven-mcp-smoke/no.sock" },
   stdio: ["pipe", "pipe", "pipe"],
 });
 
@@ -68,7 +68,7 @@ send({
   },
 });
 const init = await nextResponse();
-if (init.result?.serverInfo?.name !== "scry") fail("unexpected initialize result", init);
+if (init.result?.serverInfo?.name !== "coven-mcp") fail("unexpected initialize result", init);
 
 send({ jsonrpc: "2.0", method: "notifications/initialized" });
 
@@ -111,7 +111,7 @@ const bad = spawn(process.execPath, [entry], {
   env: {
     ...process.env,
     COVEN_SOCKET: "/nonexistent/no.sock",
-    SCRY_ALLOWED_ROOTS: "relative/path",
+    COVEN_MCP_ALLOWED_ROOTS: "relative/path",
   },
   stdio: ["pipe", "ignore", "pipe"],
 });

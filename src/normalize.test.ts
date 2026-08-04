@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 import {
   normalizeHarnesses,
   normalizeListSessions,
@@ -79,12 +79,12 @@ describe("normalizeSessionRecord", () => {
 
   test("rejects a record missing required fields with a bounded UPSTREAM_ERROR", () => {
     const { id: _id, ...withoutId } = UPSTREAM_SESSION;
-    expect(() => normalizeSessionRecord(withoutId)).toThrowError(ScryError);
+    expect(() => normalizeSessionRecord(withoutId)).toThrowError(CovenMcpError);
     try {
       normalizeSessionRecord(withoutId);
     } catch (err) {
-      expect((err as ScryError).code).toBe("UPSTREAM_ERROR");
-      expect((err as ScryError).details).toMatchObject({ kind: "invalid_session_record" });
+      expect((err as CovenMcpError).code).toBe("UPSTREAM_ERROR");
+      expect((err as CovenMcpError).details).toMatchObject({ kind: "invalid_session_record" });
     }
   });
 });
@@ -187,7 +187,7 @@ describe("normalizeMemoryList", () => {
   test("rejects a record missing its id with a bounded UPSTREAM_ERROR", () => {
     const { id: _id, ...withoutId } = upstreamMemoryEntry();
     expect(() => normalizeMemoryList([withoutId], { includeExcerpts: false })).toThrowError(
-      ScryError,
+      CovenMcpError,
     );
   });
 });
@@ -212,6 +212,6 @@ describe("normalizeHarnesses", () => {
   });
 
   test("rejects a payload without harness_capabilities", () => {
-    expect(() => normalizeHarnesses({ scanned_at: "x" })).toThrowError(ScryError);
+    expect(() => normalizeHarnesses({ scanned_at: "x" })).toThrowError(CovenMcpError);
   });
 });

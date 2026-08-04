@@ -1,17 +1,17 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { describe, expect, test } from "vitest";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 import { createTokenCodec, MAX_PENDING_RAW_BYTES, MAX_TOKEN_BYTES } from "./resume-token.js";
 
 const SESSION = "sess-1234";
 
-function expectInvalid(fn: () => unknown): ScryError {
+function expectInvalid(fn: () => unknown): CovenMcpError {
   try {
     fn();
   } catch (err) {
-    expect(err).toBeInstanceOf(ScryError);
-    expect((err as ScryError).code).toBe("INVALID_RESUME_TOKEN");
-    return err as ScryError;
+    expect(err).toBeInstanceOf(CovenMcpError);
+    expect((err as CovenMcpError).code).toBe("INVALID_RESUME_TOKEN");
+    return err as CovenMcpError;
   }
   throw new Error("expected INVALID_RESUME_TOKEN");
 }
@@ -56,7 +56,7 @@ describe("createTokenCodec", () => {
     expectInvalid(() => codec.decode(token, "other-session"));
   });
 
-  test("garbage tokens are rejected without throwing anything but ScryError", () => {
+  test("garbage tokens are rejected without throwing anything but CovenMcpError", () => {
     const codec = createTokenCodec();
     for (const garbage of ["", "no-dot", "a.b.c", "!!.!!", "aGk.aGk"]) {
       expectInvalid(() => codec.decode(garbage, SESSION));
@@ -106,7 +106,7 @@ describe("createTokenCodec", () => {
 
     expect(() =>
       codec.encode({ sessionId: SESSION, afterSeq: 1, pendingRaw: `${atCap}y` }),
-    ).toThrowError(ScryError);
+    ).toThrowError(CovenMcpError);
   });
 
   test("a signed payload whose decoded pending state exceeds the cap is rejected", () => {

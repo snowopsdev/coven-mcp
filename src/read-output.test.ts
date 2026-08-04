@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 import { MAX_TEXT_BYTES, type ReadOutputDeps, readOutput } from "./read-output.js";
 import { createTokenCodec } from "./resume-token.js";
 
@@ -283,9 +283,9 @@ describe("readOutput", () => {
       await readOutput(deps, params());
       throw new Error("expected OUTPUT_STATE_TOO_LARGE");
     } catch (err) {
-      expect(err).toBeInstanceOf(ScryError);
-      expect((err as ScryError).code).toBe("OUTPUT_STATE_TOO_LARGE");
-      expect(typeof (err as ScryError).details?.["resumeToken"]).toBe("string");
+      expect(err).toBeInstanceOf(CovenMcpError);
+      expect((err as CovenMcpError).code).toBe("OUTPUT_STATE_TOO_LARGE");
+      expect(typeof (err as CovenMcpError).details?.["resumeToken"]).toBe("string");
     }
   });
 
@@ -360,7 +360,7 @@ describe("readOutput", () => {
     const controller = new AbortController();
     controller.abort();
     await expect(readOutput(deps, params({ signal: controller.signal }))).rejects.toBeInstanceOf(
-      ScryError,
+      CovenMcpError,
     );
     expect(deps.fetches).toEqual([]);
   });

@@ -1,5 +1,5 @@
 import { request as httpRequest } from "node:http";
-import { ScryError, type ScryErrorCode } from "./errors.js";
+import { CovenMcpError, type CovenMcpErrorCode } from "./errors.js";
 
 export type CovenRequestOptions = {
   method: "GET" | "POST";
@@ -15,7 +15,7 @@ export const MAX_BODY_BYTES = 4 * 1024 * 1024;
 const DEFAULT_CONNECT_TIMEOUT_MS = 2_000;
 const DEFAULT_RESPONSE_TIMEOUT_MS = 5_000;
 
-const DAEMON_CODE_MAP: Record<string, { code: ScryErrorCode; message: string }> = {
+const DAEMON_CODE_MAP: Record<string, { code: CovenMcpErrorCode; message: string }> = {
   session_not_found: { code: "SESSION_NOT_FOUND", message: "Session not found" },
   session_not_live: { code: "SESSION_NOT_LIVE", message: "Session exists but is not live" },
 };
@@ -24,12 +24,12 @@ function upstreamError(
   message: string,
   httpStatus: number | undefined,
   details: Record<string, unknown>,
-): ScryError {
+): CovenMcpError {
   const retryable = httpStatus !== undefined && (httpStatus >= 500 || httpStatus === 429);
-  return new ScryError("UPSTREAM_ERROR", message, retryable, { ...details, httpStatus });
+  return new CovenMcpError("UPSTREAM_ERROR", message, retryable, { ...details, httpStatus });
 }
 
-function mapErrorBody(status: number, text: string): ScryError {
+function mapErrorBody(status: number, text: string): CovenMcpError {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -43,7 +43,7 @@ function mapErrorBody(status: number, text: string): ScryError {
   if (upstreamCode !== undefined) {
     const mapped = DAEMON_CODE_MAP[upstreamCode];
     if (mapped) {
-      return new ScryError(mapped.code, mapped.message, false, {
+      return new CovenMcpError(mapped.code, mapped.message, false, {
         upstreamCode,
         httpStatus: status,
       });
@@ -59,7 +59,7 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
   const payload = options.body === undefined ? undefined : JSON.stringify(options.body);
   if (payload !== undefined && Buffer.byteLength(payload) > MAX_BODY_BYTES) {
     return Promise.reject(
-      new ScryError("INVALID_INPUT", "Request body exceeds the daemon's 4 MiB limit", false, {
+      new CovenMcpError("INVALID_INPUT", "Request body exceeds the daemon's 4 MiB limit", false, {
         kind: "request_too_large",
       }),
     );
@@ -67,7 +67,7 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
 
   return new Promise((resolve, reject) => {
     let settled = false;
-    const fail = (err: ScryError) => {
+    const fail = (err: CovenMcpError) => {
       if (settled) return;
       settled = true;
       clearTimeout(responseTimer);
@@ -132,7 +132,7 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
       timedOut = true;
       req.destroy();
       fail(
-        new ScryError("DAEMON_UNAVAILABLE", "Daemon did not respond in time", true, {
+        new CovenMcpError("DAEMON_UNAVAILABLE", "Daemon did not respond in time", true, {
           kind: "timeout",
         }),
       );
@@ -143,9 +143,14 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
         socket.setTimeout(options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS, () => {
           if (!socket.connecting) return;
           fail(
-            new ScryError("DAEMON_UNAVAILABLE", "Timed out connecting to the daemon socket", true, {
-              kind: "connect_timeout",
-            }),
+            new CovenMcpError(
+              "DAEMON_UNAVAILABLE",
+              "Timed out connecting to the daemon socket",
+              true,
+              {
+                kind: "connect_timeout",
+              },
+            ),
           );
         });
         socket.once("connect", () => socket.setTimeout(0));
@@ -155,7 +160,7 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
     req.on("error", (cause) => {
       if (timedOut || settled) return;
       fail(
-        new ScryError(
+        new CovenMcpError(
           "DAEMON_UNAVAILABLE",
           "Daemon not running — start with `coven daemon start`",
           true,
@@ -165,7 +170,7 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
     });
 
     const onAbort = (): void => {
-      fail(new ScryError("INTERNAL_ERROR", "Request cancelled", false, { kind: "aborted" }));
+      fail(new CovenMcpError("INTERNAL_ERROR", "Request cancelled", false, { kind: "aborted" }));
     };
     if (options.signal !== undefined) {
       if (options.signal.aborted) {

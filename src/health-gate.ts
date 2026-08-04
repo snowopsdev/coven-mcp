@@ -1,4 +1,4 @@
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 
 export const DAEMON_API_VERSION = "coven.daemon.v1";
 export const HEALTH_CACHE_TTL_MS = 1_500;
@@ -45,13 +45,18 @@ export function normalizeHealth(raw: unknown): NormalizedHealth {
   return health;
 }
 
-function invalidSchema(): ScryError {
-  return new ScryError("UPSTREAM_ERROR", "Daemon health response has an unexpected shape", false, {
-    kind: "invalid_health_schema",
-  });
+function invalidSchema(): CovenMcpError {
+  return new CovenMcpError(
+    "UPSTREAM_ERROR",
+    "Daemon health response has an unexpected shape",
+    false,
+    {
+      kind: "invalid_health_schema",
+    },
+  );
 }
 
-type CacheEntry = { at: number; outcome: { health: NormalizedHealth } | { error: ScryError } };
+type CacheEntry = { at: number; outcome: { health: NormalizedHealth } | { error: CovenMcpError } };
 
 export function createHealthGate(deps: HealthGateDeps): HealthGate {
   const ttlMs = deps.ttlMs ?? HEALTH_CACHE_TTL_MS;
@@ -68,11 +73,11 @@ export function createHealthGate(deps: HealthGateDeps): HealthGate {
         .fetchHealth()
         .then((raw): CacheEntry => ({ at: now(), outcome: { health: normalizeHealth(raw) } }))
         .catch((error: unknown): CacheEntry => {
-          const scryError =
-            error instanceof ScryError
+          const covenMcpError =
+            error instanceof CovenMcpError
               ? error
-              : new ScryError("INTERNAL_ERROR", "Health check failed unexpectedly", false);
-          return { at: now(), outcome: { error: scryError } };
+              : new CovenMcpError("INTERNAL_ERROR", "Health check failed unexpectedly", false);
+          return { at: now(), outcome: { error: covenMcpError } };
         })
         .finally(() => {
           inflight = undefined;
@@ -91,19 +96,19 @@ export function createHealthGate(deps: HealthGateDeps): HealthGate {
     async require(capability?: string): Promise<NormalizedHealth> {
       const health = await snapshot();
       if (!health.ok) {
-        throw new ScryError("DAEMON_UNAVAILABLE", "Daemon reports it is not ok", true, {
+        throw new CovenMcpError("DAEMON_UNAVAILABLE", "Daemon reports it is not ok", true, {
           kind: "not_ok",
         });
       }
       if (health.apiVersion !== DAEMON_API_VERSION) {
-        throw new ScryError(
+        throw new CovenMcpError(
           "INCOMPATIBLE_DAEMON",
           `Requires ${DAEMON_API_VERSION}, found ${health.apiVersion ?? "unknown"}`,
           false,
         );
       }
       if (capability !== undefined && health.capabilities?.[capability] !== true) {
-        throw new ScryError(
+        throw new CovenMcpError(
           "CAPABILITY_UNAVAILABLE",
           `Daemon does not advertise the required "${capability}" capability`,
           true,

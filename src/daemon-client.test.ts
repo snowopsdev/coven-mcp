@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { type FakeDaemon, jsonHandler, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { covenRequest } from "./daemon-client.js";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 
 let daemon: FakeDaemon | undefined;
 
@@ -10,12 +10,12 @@ afterEach(async () => {
   daemon = undefined;
 });
 
-async function expectScryError(promise: Promise<unknown>): Promise<ScryError> {
+async function expectCovenMcpError(promise: Promise<unknown>): Promise<CovenMcpError> {
   try {
     await promise;
   } catch (err) {
-    expect(err).toBeInstanceOf(ScryError);
-    return err as ScryError;
+    expect(err).toBeInstanceOf(CovenMcpError);
+    return err as CovenMcpError;
   }
   throw new Error("expected the request to reject");
 }
@@ -45,8 +45,11 @@ describe("covenRequest", () => {
   });
 
   test("maps an unreachable socket to DAEMON_UNAVAILABLE naming `coven daemon start`", async () => {
-    const err = await expectScryError(
-      covenRequest("/nonexistent/scry-test/no.sock", { method: "GET", path: "/api/v1/health" }),
+    const err = await expectCovenMcpError(
+      covenRequest("/nonexistent/coven-mcp-test/no.sock", {
+        method: "GET",
+        path: "/api/v1/health",
+      }),
     );
     expect(err.code).toBe("DAEMON_UNAVAILABLE");
     expect(err.retryable).toBe(true);
@@ -57,7 +60,7 @@ describe("covenRequest", () => {
     daemon = await startFakeDaemon(
       jsonHandler(404, { error: { code: "session_not_found", message: "nope" } }),
     );
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, { method: "GET", path: "/api/v1/sessions/x" }),
     );
     expect(err.code).toBe("SESSION_NOT_FOUND");
@@ -68,7 +71,7 @@ describe("covenRequest", () => {
     daemon = await startFakeDaemon(
       jsonHandler(409, { error: { code: "session_not_live", message: "dead" } }),
     );
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, {
         method: "POST",
         path: "/api/v1/sessions/x/input",
@@ -83,7 +86,7 @@ describe("covenRequest", () => {
     daemon = await startFakeDaemon(
       jsonHandler(400, { error: { code: "harness_not_found", message: "secret /Users/x path" } }),
     );
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, { method: "GET", path: "/api/v1/sessions" }),
     );
     expect(err.code).toBe("UPSTREAM_ERROR");
@@ -94,14 +97,14 @@ describe("covenRequest", () => {
 
   test("UPSTREAM_ERROR is retryable for 5xx and 429", async () => {
     daemon = await startFakeDaemon(jsonHandler(503, { error: { code: "overloaded" } }));
-    const err5xx = await expectScryError(
+    const err5xx = await expectCovenMcpError(
       covenRequest(daemon.socketPath, { method: "GET", path: "/api/v1/sessions" }),
     );
     expect(err5xx.code).toBe("UPSTREAM_ERROR");
     expect(err5xx.retryable).toBe(true);
 
     daemon.setHandler(jsonHandler(429, { error: { code: "rate_limited" } }));
-    const err429 = await expectScryError(
+    const err429 = await expectCovenMcpError(
       covenRequest(daemon.socketPath, { method: "GET", path: "/api/v1/sessions" }),
     );
     expect(err429.retryable).toBe(true);
@@ -112,7 +115,7 @@ describe("covenRequest", () => {
       res.writeHead(500, { "content-type": "text/html" });
       res.end("<html>Internal Server Error</html>");
     });
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, { method: "GET", path: "/api/v1/health" }),
     );
     expect(err.code).toBe("UPSTREAM_ERROR");
@@ -127,7 +130,7 @@ describe("covenRequest", () => {
       for (let i = 0; i < 5; i++) res.write(chunk);
       res.end();
     });
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, { method: "GET", path: "/api/v1/sessions" }),
     );
     expect(err.code).toBe("UPSTREAM_ERROR");
@@ -136,7 +139,7 @@ describe("covenRequest", () => {
 
   test("rejects outbound bodies over 4 MiB before sending any request", async () => {
     daemon = await startFakeDaemon();
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, {
         method: "POST",
         path: "/api/v1/sessions",
@@ -159,7 +162,7 @@ describe("covenRequest", () => {
       signal: controller.signal,
     });
     setTimeout(() => controller.abort(), 30);
-    const err = await expectScryError(promise);
+    const err = await expectCovenMcpError(promise);
     expect(err.code).toBe("INTERNAL_ERROR");
     expect(err.details).toMatchObject({ kind: "aborted" });
   });
@@ -168,7 +171,7 @@ describe("covenRequest", () => {
     daemon = await startFakeDaemon((_req, _res) => {
       /* never respond */
     });
-    const err = await expectScryError(
+    const err = await expectCovenMcpError(
       covenRequest(daemon.socketPath, {
         method: "GET",
         path: "/api/v1/health",

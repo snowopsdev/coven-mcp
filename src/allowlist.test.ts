@@ -8,10 +8,10 @@ import {
   isPathWithin,
   parseAllowedRoots,
 } from "./allowlist.js";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 
 function tempTree(): { base: string; allowed: string; outside: string } {
-  const base = mkdtempSync(join(tmpdir(), "scry-allow-"));
+  const base = mkdtempSync(join(tmpdir(), "coven-mcp-allow-"));
   const allowed = join(base, "work", "app");
   const outside = join(base, "work", "app2");
   mkdirSync(allowed, { recursive: true });
@@ -60,16 +60,16 @@ describe("isPathWithin", () => {
 });
 
 describe("authorizeProjectRoot", () => {
-  test("an empty allowlist denies with ROOT_NOT_ALLOWED naming SCRY_ALLOWED_ROOTS", () => {
+  test("an empty allowlist denies with ROOT_NOT_ALLOWED naming COVEN_MCP_ALLOWED_ROOTS", () => {
     const { allowed } = tempTree();
     try {
       authorizeProjectRoot([], allowed, "coven_start_session");
       throw new Error("expected denial");
     } catch (err) {
-      expect(err).toBeInstanceOf(ScryError);
-      expect((err as ScryError).code).toBe("ROOT_NOT_ALLOWED");
-      expect((err as ScryError).message).toContain("SCRY_ALLOWED_ROOTS");
-      expect((err as ScryError).message).toContain("coven_start_session");
+      expect(err).toBeInstanceOf(CovenMcpError);
+      expect((err as CovenMcpError).code).toBe("ROOT_NOT_ALLOWED");
+      expect((err as CovenMcpError).message).toContain("COVEN_MCP_ALLOWED_ROOTS");
+      expect((err as CovenMcpError).message).toContain("coven_start_session");
     }
   });
 
@@ -84,7 +84,7 @@ describe("authorizeProjectRoot", () => {
     const { allowed, outside } = tempTree();
     const roots = parseAllowedRoots(allowed);
     expect(() => authorizeProjectRoot(roots, outside, "coven_start_session")).toThrowError(
-      ScryError,
+      CovenMcpError,
     );
   });
 
@@ -94,7 +94,7 @@ describe("authorizeProjectRoot", () => {
     symlinkSync(join(base, "work", "app2"), escapeLink);
     const roots = parseAllowedRoots(allowed);
     expect(() => authorizeProjectRoot(roots, escapeLink, "coven_start_session")).toThrowError(
-      ScryError,
+      CovenMcpError,
     );
   });
 
@@ -106,8 +106,8 @@ describe("authorizeProjectRoot", () => {
       authorizeProjectRoot(roots, missing, "coven_send_input");
       throw new Error("expected denial");
     } catch (err) {
-      expect((err as ScryError).code).toBe("ROOT_NOT_ALLOWED");
-      expect((err as ScryError).message).not.toContain(missing);
+      expect((err as CovenMcpError).code).toBe("ROOT_NOT_ALLOWED");
+      expect((err as CovenMcpError).message).not.toContain(missing);
     }
   });
 });

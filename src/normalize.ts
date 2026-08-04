@@ -1,4 +1,4 @@
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 
 export type SessionRecord = {
   id: string;
@@ -83,8 +83,8 @@ export type ListHarnessesResult = {
   scannedAt: string;
 };
 
-function schemaError(kind: string): ScryError {
-  return new ScryError("UPSTREAM_ERROR", "Daemon response has an unexpected shape", false, {
+function schemaError(kind: string): CovenMcpError {
+  return new CovenMcpError("UPSTREAM_ERROR", "Daemon response has an unexpected shape", false, {
     kind,
   });
 }
@@ -250,7 +250,7 @@ export type MemoryPolicy = { includeExcerpts: boolean };
 /**
  * FR-9 excerpt policy: excerpts are blanked unless explicitly opted in, and
  * even then revealRequired or any non-null classification other than "public"
- * forces redaction. `excerptRedacted` is true exactly when scry blanked a
+ * forces redaction. `excerptRedacted` is true exactly when the server blanked a
  * non-empty daemon-provided excerpt.
  */
 function normalizeMemoryEntry(raw: unknown, policy: MemoryPolicy): MemoryEntry {

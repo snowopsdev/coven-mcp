@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { type FakeDaemon, jsonHandler, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { covenRequest } from "./daemon-client.js";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 import { createHealthGate } from "./health-gate.js";
 
 let daemon: FakeDaemon | undefined;
@@ -25,12 +25,12 @@ function gateFor(socketPath: () => string, now: () => number) {
   });
 }
 
-async function expectScryError(promise: Promise<unknown>): Promise<ScryError> {
+async function expectCovenMcpError(promise: Promise<unknown>): Promise<CovenMcpError> {
   try {
     await promise;
   } catch (err) {
-    expect(err).toBeInstanceOf(ScryError);
-    return err as ScryError;
+    expect(err).toBeInstanceOf(CovenMcpError);
+    return err as CovenMcpError;
   }
   throw new Error("expected the gate to reject");
 }
@@ -55,7 +55,7 @@ describe("createHealthGate", () => {
       () => daemon!.socketPath,
       () => 0,
     );
-    const err = await expectScryError(gate.require("sessions"));
+    const err = await expectCovenMcpError(gate.require("sessions"));
     expect(err.code).toBe("INCOMPATIBLE_DAEMON");
     expect(err.retryable).toBe(false);
     expect(err.message).toContain("coven.daemon.v2");
@@ -69,7 +69,7 @@ describe("createHealthGate", () => {
       () => daemon!.socketPath,
       () => 0,
     );
-    const err = await expectScryError(gate.require("sessions"));
+    const err = await expectCovenMcpError(gate.require("sessions"));
     expect(err.code).toBe("CAPABILITY_UNAVAILABLE");
     expect(err.retryable).toBe(true);
     expect(err.message).toContain("sessions");
@@ -83,7 +83,7 @@ describe("createHealthGate", () => {
       () => daemon!.socketPath,
       () => 0,
     );
-    const err = await expectScryError(gate.require("sessions"));
+    const err = await expectCovenMcpError(gate.require("sessions"));
     expect(err.code).toBe("CAPABILITY_UNAVAILABLE");
   });
 
@@ -93,7 +93,7 @@ describe("createHealthGate", () => {
       () => daemon!.socketPath,
       () => 0,
     );
-    const err = await expectScryError(gate.require("sessions"));
+    const err = await expectCovenMcpError(gate.require("sessions"));
     expect(err.code).toBe("DAEMON_UNAVAILABLE");
   });
 
@@ -131,20 +131,20 @@ describe("createHealthGate", () => {
 
   test("a cached failure expires with the TTL, allowing recovery after the daemon starts", async () => {
     let clock = 0;
-    let socketPath = "/nonexistent/scry-test/no.sock";
+    let socketPath = "/nonexistent/coven-mcp-test/no.sock";
     const gate = gateFor(
       () => socketPath,
       () => clock,
     );
 
-    const err = await expectScryError(gate.require("sessions"));
+    const err = await expectCovenMcpError(gate.require("sessions"));
     expect(err.code).toBe("DAEMON_UNAVAILABLE");
 
     daemon = await startFakeDaemon(jsonHandler(200, GOOD_HEALTH));
     socketPath = daemon.socketPath;
 
     clock = 1_000; // still within TTL: cached failure is reused
-    const cached = await expectScryError(gate.require("sessions"));
+    const cached = await expectCovenMcpError(gate.require("sessions"));
     expect(cached.code).toBe("DAEMON_UNAVAILABLE");
     expect(daemon.requests.length).toBe(0);
 
@@ -158,7 +158,7 @@ describe("createHealthGate", () => {
       () => daemon!.socketPath,
       () => 0,
     );
-    const err = await expectScryError(gate.require("sessions"));
+    const err = await expectCovenMcpError(gate.require("sessions"));
     expect(err.code).toBe("UPSTREAM_ERROR");
     expect(err.details).toMatchObject({ kind: "invalid_health_schema" });
   });

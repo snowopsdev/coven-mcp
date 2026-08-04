@@ -113,14 +113,14 @@ check("no .env files tracked", () => {
 
 check("release-mode docs check passes (no placeholders)", () => {
   execFileSync("node", ["scripts/check-docs.mjs"], {
-    env: { ...process.env, SCRY_RELEASE_CHECK: "true" },
+    env: { ...process.env, COVEN_MCP_RELEASE_CHECK: "true" },
     stdio: "pipe",
   });
   return "all sections filled, no TODO markers";
 });
 
 check("clean clone builds and verifies", () => {
-  const dir = mkdtempSync(join(tmpdir(), "scry-freeze-"));
+  const dir = mkdtempSync(join(tmpdir(), "coven-mcp-freeze-"));
   try {
     const clone = join(dir, "clone");
     sh("git", ["clone", "--quiet", process.cwd(), clone]);
@@ -128,7 +128,7 @@ check("clean clone builds and verifies", () => {
     execFileSync("npm", ["run", "verify"], {
       cwd: clone,
       stdio: "pipe",
-      env: { ...process.env, SCRY_RELEASE_CHECK: "true" },
+      env: { ...process.env, COVEN_MCP_RELEASE_CHECK: "true" },
     });
     return "npm ci && npm run verify green from a fresh clone";
   } finally {
@@ -161,7 +161,7 @@ check("repository is public and pushed", () => {
   return `public and in sync with HEAD (${head.slice(0, 8)})`;
 });
 
-const TAG = process.env.SCRY_FREEZE_TAG ?? "july-hackathon-2026-final";
+const TAG = process.env.COVEN_MCP_FREEZE_TAG ?? "july-hackathon-2026-final";
 check(`tag ${TAG} (if present) points at HEAD`, () => {
   let target = "";
   try {

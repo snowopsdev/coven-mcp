@@ -6,7 +6,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, test } from "vitest";
 import { type FakeDaemon, startFakeDaemon } from "../test/helpers/fake-daemon.js";
 import { parseAllowedRoots } from "./allowlist.js";
-import { createScryServer } from "./server.js";
+import { createCovenMcpServer } from "./server.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -77,12 +77,12 @@ async function routedDaemon(routes: Record<string, Route>): Promise<{
 async function connectClient(socketPath: string, allowedRoots: string[] = []): Promise<Client> {
   // Same canonicalization path production uses (index.ts): raw env value in,
   // canonical roots out — this is what absorbs macOS's /var -> /private/var.
-  const server = createScryServer({
+  const server = createCovenMcpServer({
     socketPath,
     allowedRoots: parseAllowedRoots(allowedRoots.join(":") || undefined),
   });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const c = new Client({ name: "scry-test", version: "0.0.0" });
+  const c = new Client({ name: "coven-mcp-test", version: "0.0.0" });
   await Promise.all([c.connect(clientTransport), server.connect(serverTransport)]);
   client = c;
   return c;
@@ -95,7 +95,7 @@ function resultJson(result: unknown): unknown {
 }
 
 function allowedTree(): { allowed: string; sibling: string } {
-  const base = mkdtempSync(join(tmpdir(), "scry-life-"));
+  const base = mkdtempSync(join(tmpdir(), "coven-mcp-life-"));
   const allowed = join(base, "work", "app");
   const sibling = join(base, "work", "app2");
   mkdirSync(allowed, { recursive: true });

@@ -13,7 +13,7 @@
 - Use **npm** with Node 22 and commit `package-lock.json` when the package is initialized.
 
 | Task | Command |
-|---|---|
+| --- | --- |
 | Install | `npm ci` |
 | Build | `npm run build` |
 | Focused test | `npm test -- path/to/file.test.ts` |
@@ -38,7 +38,7 @@
 ## Security & Configuration
 
 - Never log prompts, input, session output, memory excerpts, environment values, or resume tokens.
-- Treat `SCRY_ALLOWED_ROOTS` as authorization, not sandboxing. Memory excerpts remain disabled unless `SCRY_INCLUDE_MEMORY_EXCERPTS=true` and privacy flags permit disclosure.
+- Treat `COVEN_MCP_ALLOWED_ROOTS` as authorization, not sandboxing. Memory excerpts remain disabled unless `COVEN_MCP_INCLUDE_MEMORY_EXCERPTS=true` and privacy flags permit disclosure.
 
 ## Commits & Pull Requests
 

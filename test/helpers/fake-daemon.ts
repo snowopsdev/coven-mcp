@@ -14,7 +14,7 @@ export type FakeDaemon = {
 
 /** Starts a real HTTP server bound to a temporary Unix socket. */
 export async function startFakeDaemon(initial?: FakeHandler): Promise<FakeDaemon> {
-  const dir = mkdtempSync(join(tmpdir(), "scry-"));
+  const dir = mkdtempSync(join(tmpdir(), "coven-mcp-"));
   const socketPath = join(dir, "d.sock");
   let handler: FakeHandler =
     initial ??

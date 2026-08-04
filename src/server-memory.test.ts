@@ -2,7 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, test } from "vitest";
 import { type FakeDaemon, startFakeDaemon } from "../test/helpers/fake-daemon.js";
-import { createScryServer, type ScryServerConfig } from "./server.js";
+import { type CovenMcpServerConfig, createCovenMcpServer } from "./server.js";
 
 let daemon: FakeDaemon | undefined;
 let client: Client | undefined;
@@ -35,11 +35,11 @@ const UPSTREAM_ENTRY = {
 };
 
 async function connectClient(
-  config: Partial<ScryServerConfig> & { socketPath: string },
+  config: Partial<CovenMcpServerConfig> & { socketPath: string },
 ): Promise<Client> {
-  const server = createScryServer({ allowedRoots: [], ...config });
+  const server = createCovenMcpServer({ allowedRoots: [], ...config });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const c = new Client({ name: "scry-test", version: "0.0.0" });
+  const c = new Client({ name: "coven-mcp-test", version: "0.0.0" });
   await Promise.all([c.connect(clientTransport), server.connect(serverTransport)]);
   client = c;
   return c;

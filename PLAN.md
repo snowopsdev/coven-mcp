@@ -10,7 +10,7 @@
 
 ## 1. The project
 
-**Working name:** `scry` — an MCP server that bridges the Coven daemon to any stdio-capable MCP client.
+**Working name:** `coven-mcp` — an MCP server that bridges the Coven daemon to any stdio-capable MCP client.
 
 **One-liner:** Expose Coven harnesses, sessions, output, and memory listings as MCP tools, so Claude Desktop, Cursor, or another stdio-capable MCP client can drive Coven without a bespoke integration.
 
@@ -130,14 +130,14 @@ The daemon has **no authentication** — trust is same-user local socket access.
 
 Most entrants will ship this unguarded. Do not.
 
-- **Project-root allowlist** via `SCRY_ALLOWED_ROOTS` env var. Deny by default; empty allowlist = read-only mode.
-- **Memory excerpts opt-in** via `SCRY_INCLUDE_MEMORY_EXCERPTS=true`. Default responses blank excerpts; even when enabled, upstream `revealRequired`/classification flags can still force redaction.
+- **Project-root allowlist** via `COVEN_MCP_ALLOWED_ROOTS` env var. Deny by default; empty allowlist = read-only mode.
+- **Memory excerpts opt-in** via `COVEN_MCP_INCLUDE_MEMORY_EXCERPTS=true`. Default responses blank excerpts; even when enabled, upstream `revealRequired`/classification flags can still force redaction.
 - **Write tools gated**; read tools always available but explicitly described as potentially exposing session metadata/output, memory excerpts, and harness-manifest paths (including absolute local paths) to the connected MCP client.
 - `coven_start_session` canonicalizes the requested root and optional `cwd`. `coven_send_input` and `coven_kill_session` first fetch the authoritative session record and authorize its canonical `project_root`; they never accept a caller-supplied root.
 - Root containment is path-component based, not string-prefix based (`/work/app2` is not inside `/work/app`). Missing paths, failed canonicalization, symlink escapes, malformed session records, and lookup failures all deny the mutation.
 - The allowlist is an MCP authorization gate, **not a process sandbox**. A harness launched inside an allowed root still runs with the user's broader same-user OS authority; document this residual risk.
-- **Misconfiguration is loud, never partial.** Any invalid `SCRY_ALLOWED_ROOTS` entry (relative, missing, not a directory, canonicalization failure) aborts startup with a metadata-only stderr message; the server never drops the bad entry or silently degrades. Boolean `SCRY_*` env vars accept only the exact literal `true`.
-- **Prompt injection is in the threat model.** Session output, titles, and memory excerpts are untrusted content that may carry instructions aimed at the consuming LLM. `scry` sanitizes encoding (ANSI/CR), not semantics — never embed returned content in tool descriptions or error messages, and say so in README.
+- **Misconfiguration is loud, never partial.** Any invalid `COVEN_MCP_ALLOWED_ROOTS` entry (relative, missing, not a directory, canonicalization failure) aborts startup with a metadata-only stderr message; the server never drops the bad entry or silently degrades. Boolean `COVEN_MCP_*` env vars accept only the exact literal `true`.
+- **Prompt injection is in the threat model.** Session output, titles, and memory excerpts are untrusted content that may carry instructions aimed at the consuming LLM. `coven-mcp` sanitizes encoding (ANSI/CR), not semantics — never embed returned content in tool descriptions or error messages, and say so in README.
 - **Documented threat model** in README under "Security and privacy" (a required section anyway).
 - Never log prompts or session content. MCP JSON-RPC is the only stdout content; diagnostics go to stderr and contain metadata only.
 - No secrets in repo — verified in preflight.
@@ -151,7 +151,7 @@ Most entrants will ship this unguarded. Do not.
 The "15 required README sections" target is otherwise untestable. Unless the official brief specifies a different list, `npm run verify` checks these project-defined sections:
 
 1. Overview
-2. Why `scry` (including distinction from `coven-reach`)
+2. Why `coven-mcp` (including distinction from `coven-reach`)
 3. Prerequisites and supported platforms
 4. Install and build
 5. MCP client configuration
@@ -223,6 +223,6 @@ Required: project name, one-sentence summary, team members, repo URL, tag name, 
 | PTY output unparseable in practice | Descope ladder step 2 — return raw events |
 | Unbounded event accumulation exhausts memory or exceeds an MCP client limit | Enforce `maxBytes`, return `truncated: true` plus a resume token |
 | Session-id write tools bypass the root allowlist | Fetch the authoritative session before input/kill and fail closed on lookup/canonicalization errors |
-| MCP client restarts `scry`, invalidating all resume tokens | Documented recovery: re-call with `afterSeq` = last observed `lastSeq`; README troubleshooting covers it |
+| MCP client restarts `coven-mcp`, invalidating all resume tokens | Documented recovery: re-call with `afterSeq` = last observed `lastSeq`; README troubleshooting covers it |
 | Time overrun | Checkpoint A abort gate; Friday is freeze-only |
 | Bonus PRs not merged in time | Never counted toward the 60-point threshold |

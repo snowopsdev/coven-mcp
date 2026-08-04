@@ -2,26 +2,26 @@
 import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { AllowlistConfigError, parseAllowedRoots } from "./allowlist.js";
-import { createScryServer } from "./server.js";
+import { createCovenMcpServer } from "./server.js";
 import { resolveSocketPath } from "./socket-path.js";
 
 async function main(): Promise<void> {
   const socketPath = resolveSocketPath(process.env, homedir());
   let allowedRoots: string[];
   try {
-    allowedRoots = parseAllowedRoots(process.env["SCRY_ALLOWED_ROOTS"]);
+    allowedRoots = parseAllowedRoots(process.env["COVEN_MCP_ALLOWED_ROOTS"]);
   } catch (err) {
     // FR-23: a misconfigured allowlist is loud, never partially honored.
     const message =
-      err instanceof AllowlistConfigError ? err.message : "invalid SCRY_ALLOWED_ROOTS";
-    process.stderr.write(`scry: ${message}\n`);
+      err instanceof AllowlistConfigError ? err.message : "invalid COVEN_MCP_ALLOWED_ROOTS";
+    process.stderr.write(`coven-mcp: ${message}\n`);
     process.exit(1);
   }
-  const server = createScryServer({
+  const server = createCovenMcpServer({
     socketPath,
     allowedRoots,
     // FR-22: boolean env vars recognize only the exact literal "true".
-    includeMemoryExcerpts: process.env["SCRY_INCLUDE_MEMORY_EXCERPTS"] === "true",
+    includeMemoryExcerpts: process.env["COVEN_MCP_INCLUDE_MEMORY_EXCERPTS"] === "true",
   });
   const transport = new StdioServerTransport();
 
@@ -37,6 +37,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  process.stderr.write(`scry: fatal ${err instanceof Error ? err.name : "error"}\n`);
+  process.stderr.write(`coven-mcp: fatal ${err instanceof Error ? err.name : "error"}\n`);
   process.exit(1);
 });

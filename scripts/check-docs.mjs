@@ -2,12 +2,12 @@
 // Documentation check (PLAN §6): the 15 required README sections exist and
 // are non-empty, and HACKATHON.md carries the pinned SHA and freeze tag.
 // TODO markers are reported but only fail the check in release mode
-// (SCRY_RELEASE_CHECK=true), which the freeze preflight sets.
+// (COVEN_MCP_RELEASE_CHECK=true), which the freeze preflight sets.
 import { readFileSync } from "node:fs";
 
 const REQUIRED_SECTIONS = [
   "Overview",
-  "Why `scry`",
+  "Why `coven-mcp`",
   "Prerequisites and supported platforms",
   "Install and build",
   "MCP client configuration",
@@ -55,7 +55,7 @@ if (!hackathon.includes("july-hackathon-2026-final")) {
 
 const todoCount = (readme.match(/TODO/g) ?? []).length + (hackathon.match(/TODO/g) ?? []).length;
 if (todoCount > 0) {
-  if (process.env.SCRY_RELEASE_CHECK === "true") {
+  if (process.env.COVEN_MCP_RELEASE_CHECK === "true") {
     console.error(`DOCS FAIL: ${todoCount} TODO markers remain at release time`);
     failed = true;
   } else {

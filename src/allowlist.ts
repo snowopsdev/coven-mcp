@@ -1,6 +1,6 @@
 import { realpathSync, statSync } from "node:fs";
 import { isAbsolute } from "node:path";
-import { ScryError } from "./errors.js";
+import { CovenMcpError } from "./errors.js";
 
 /**
  * Startup configuration failure. Deliberately names the entry position but
@@ -9,7 +9,7 @@ import { ScryError } from "./errors.js";
  */
 export class AllowlistConfigError extends Error {
   constructor(position: number, reason: string) {
-    super(`SCRY_ALLOWED_ROOTS entry #${position} ${reason}; fix the allowlist and restart`);
+    super(`COVEN_MCP_ALLOWED_ROOTS entry #${position} ${reason}; fix the allowlist and restart`);
     this.name = "AllowlistConfigError";
   }
 }
@@ -45,10 +45,10 @@ export function isPathWithin(child: string, parent: string): boolean {
   return child.startsWith(prefix);
 }
 
-function deny(operation: string): ScryError {
-  return new ScryError(
+function deny(operation: string): CovenMcpError {
+  return new CovenMcpError(
     "ROOT_NOT_ALLOWED",
-    `${operation} denied: the project root is not in SCRY_ALLOWED_ROOTS ` +
+    `${operation} denied: the project root is not in COVEN_MCP_ALLOWED_ROOTS ` +
       "(unset or empty means read-only mode)",
     false,
     { operation },
