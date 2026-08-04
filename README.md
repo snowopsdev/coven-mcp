@@ -53,36 +53,34 @@ Upstream ships roughly ten commits a day at version `0.0.0`, so treat the pinned
 ## Architecture
 
 ```mermaid
-flowchart TB
-    agent["LLM in an MCP client<br/>Claude Desktop, Cursor, ..."]
+flowchart LR
+    agent["MCP client<br/>Claude Desktop, Cursor"]
 
     subgraph mcp["coven-mcp"]
-        tools["Tool surface<br/>6 read tools, 3 write tools"]
-        guard["Guards<br/>input validation<br/>health and capability gate<br/>project-root allowlist"]
-        socket["Socket client<br/>timeouts, 4 MiB caps"]
-        boundary["Response boundary<br/>snake_case to camelCase<br/>structured error mapping"]
-        pipeline["Output pipeline<br/>bounded polling<br/>ANSI and CR sanitizer<br/>signed resume token"]
+        direction TB
+        tools["Tools<br/>6 read · 3 write"]
+        guard["Guards<br/>validate input<br/>version + capability gate<br/>project-root allowlist"]
+        socket["Socket client<br/>timeouts · 4 MiB caps"]
+        resp["Response handling<br/>snake_case to camelCase<br/>ANSI/CR sanitizer<br/>signed resume token"]
     end
 
     daemon["Coven daemon<br/>coven.daemon.v1<br/>no authentication"]
-    pty["Harness PTY sessions"]
+    pty["Harness<br/>PTY sessions"]
 
-    agent <-->|"stdio, JSON-RPC only"| tools
+    agent <-->|"stdio JSON-RPC"| tools
     tools --> guard
-    guard -.->|"denied: ROOT_NOT_ALLOWED"| tools
+    guard -.->|"denied"| tools
     guard -->|"authorized"| socket
-    socket <-->|"HTTP over $COVEN_HOME/coven.sock"| daemon
+    socket <-->|"HTTP over unix socket"| daemon
     daemon --> pty
-    socket -->|"session and harness JSON"| boundary
-    socket -->|"raw PTY event stream"| pipeline
-    boundary --> tools
-    pipeline --> tools
+    socket --> resp
+    resp --> tools
 ```
 
-Read the diagram as one request travelling down and its response coming back up. Two things about it are the whole point of the project:
+Left to right: a request enters from the client, and only crosses into the daemon once it has cleared the guards. Inside the box it loops — tools, guards, socket, response handling, back to tools. Two things about that shape are the whole point of the project:
 
-- **`Guards` is a trust boundary, not a layer of glue.** The daemon has no authentication, so every request that reaches the socket client has already been validated, version-gated, and — for write tools — authorized against an allowlisted project root. Denials never reach the daemon.
-- **Responses take one of two paths.** Ordinary JSON is normalized and returned; the raw PTY event stream goes through a separate pipeline that sanitizes terminal control codes and issues a signed token so the next call resumes exactly where this one stopped.
+- **`Guards` is a trust boundary, not a layer of glue.** The daemon has no authentication, so anything reaching the socket client has already been validated, version-gated, and — for write tools — authorized against an allowlisted project root. Denials loop straight back to the caller; they never reach the daemon.
+- **Nothing is handed back raw.** Daemon JSON is normalized to camelCase with structured errors, and raw PTY event streams go through the ANSI/CR sanitizer, which also issues a signed resume token so the next call continues exactly where this one stopped.
 
 ## Prerequisites
 
