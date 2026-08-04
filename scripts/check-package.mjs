@@ -36,7 +36,7 @@ if (!entry.startsWith("#!/usr/bin/env node")) {
 }
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
-if (pkg.bin?.["scry-mcp"] !== "dist/index.js") {
+if (pkg.bin?.["coven-mcp"] !== "dist/index.js") {
   console.error("PACKAGE FAIL: package.json bin does not point at dist/index.js");
   process.exit(1);
 }

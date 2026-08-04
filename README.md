@@ -44,13 +44,13 @@ Note: the daemon reports `covenVersion: "0.0.0"` even on a 0.0.34 install, so `s
 ## Install and build
 
 ```sh
-git clone https://github.com/snowopsdev/scry-mcp.git scry
-cd scry
+git clone https://github.com/snowopsdev/coven-mcp.git
+cd coven-mcp
 npm ci
 npm run build
 ```
 
-This produces a runnable entry point at `dist/index.js` with a shebang and a `scry-mcp` bin alias. No credentials, network access, or running daemon are needed to build.
+This produces a runnable entry point at `dist/index.js` with a shebang and a `coven-mcp` bin alias. No credentials, network access, or running daemon are needed to build.
 
 ## MCP client configuration
 

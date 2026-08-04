@@ -378,7 +378,7 @@ Not met ⇒ **descope immediately** to the Familiar Contract validator per `PLAN
 1. **BLOCKING FOR SUBMISSION, NOT BUILD — official brief unavailable.** The documented `OpenCoven/opencoven-beta-july-hackathon-2026` repository/submission URL was not accessible during this review. Reconfirm the deadline, tag, required README content, license/DCO rules, scoring, and submission form before Block 8.
 2. The local `GET /api/v1/memory` response currently contains zero entries. Seed a non-sensitive demo fixture through supported Coven behavior, or deliberately demonstrate an honest empty result; never open the memory database directly.
 3. Does `coven doctor` confirm at least one authenticated harness for the live write demo? Harness capability discovery alone does not prove provider authentication.
-4. Publish to npm as `scry-mcp`, or repo-only? Publishing strengthens reproducibility; costs ~30 min. Either choice still requires a compiled entry point and clean-clone package smoke test.
+4. Publish to npm, or repo-only? **Resolved Aug 4:** `scry-mcp` is unavailable — an unrelated Solana-wallet MCP server published under that name on 2026-07-06 — and plain `scry` has been taken since 2013. The package and repository are therefore named `coven-mcp`, which is free on npm and GitHub. Whether to actually publish remains open; publishing strengthens reproducibility and costs ~30 min. Either choice still requires a compiled entry point and clean-clone package smoke test.
 
 ## 12. Out of scope for v1 — the "next steps" list
 

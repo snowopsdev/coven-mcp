@@ -1,5 +1,5 @@
 {
-  "name": "scry-mcp",
+  "name": "coven-mcp",
   "version": "0.1.0",
   "description": "MCP server bridging the Coven daemon to any stdio-capable MCP client",
   "type": "module",
@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "bin": {
-    "scry-mcp": "dist/index.js"
+    "coven-mcp": "dist/index.js"
   },
   "files": [
     "dist",
