@@ -238,6 +238,14 @@ The event's naming is inconsistent, and getting it wrong is unrecoverable after 
 
 The July naming is most likely a legacy artifact — the rules were published under `ctech.llc/072626hackathonrules` (July 26) for an event that runs August 2–8. **Do not "fix" the tag to match the repository.** Confirm both against the issue form when it opens; if the form states a different tag, the form wins and the tag must be re-cut before the deadline.
 
+### After the deadline
+
+The guide is explicit, and violating this is worse than any missing feature:
+
+- **Do not edit the submission after the deadline**, except to repair a broken link without changing the underlying artifact — and record any such correction transparently.
+- Continuing development afterwards is allowed **on another branch**; it does not change the score. Do not push it to `main` or move the tag.
+- The issue timestamp and the frozen Git reference together must show the full entry existed before the deadline, so file the issue *after* pushing the tag, not before.
+
 **Submission issue:** [OpenCoven hackathon issue form](https://github.com/OpenCoven/opencoven-beta-august-hackathon-2026/issues/new/choose)
 Required: project name, one-sentence summary, team members, repo URL, tag name, full commit SHA, demo link, OpenCoven-use summary, bonus claims, greenfield/MIT declaration.
 
