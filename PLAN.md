@@ -49,10 +49,10 @@
 ### Known traps (pre-loaded, do not rediscover)
 
 1. `STREAM-JSON.md` documents the **CLI stdout** protocol, not the daemon socket. Ignore it.
-2. Requests are **camelCase** (`projectRoot`); `SessionRecord` responses are **snake_case** (`project_root`).
+2. Requests are **camelCase** (`projectRoot`); `SessionRecord` responses are **snake_case** (`project_root`) — but the **events envelope is camelCase** (`events`, `nextCursor`, `hasMore`) while its event objects are snake_case (`payload_json`). Live-verified Aug 3.
 3. `payload_json` on events is a **JSON string** — requires a second parse.
 4. Event `output.data` is **raw PTY text** with ANSI escapes, CRs, and partial lines. Must strip and reassemble.
-5. Event kinds are undocumented. From source: `output`, `input`, `status`, `exit`.
+5. Event kinds are undocumented. From source: `output`, `input`, `status`, `exit` — plus `kill`, observed live on Aug 3 (treat as known and silent, not "unknown"). Exit payloads are camelCase: `{"exitCode":129,"status":"failed"}`.
 6. The Unix-socket server rejects request bodies over 4 MiB. Preflight request size and independently cap response/output accumulation.
 7. Branch on `error.code`, never `error.message`. ~35 stable codes documented.
 8. `session_not_live` (409) and `session_not_found` (404) need distinct MCP error mappings.
