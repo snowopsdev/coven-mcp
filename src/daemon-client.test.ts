@@ -143,6 +143,23 @@ describe("covenRequest", () => {
     expect(daemon.requests).toEqual([]);
   });
 
+  test("an abort signal cancels an in-flight request promptly", async () => {
+    daemon = await startFakeDaemon((_req, _res) => {
+      /* never respond */
+    });
+    const controller = new AbortController();
+    const promise = covenRequest(daemon.socketPath, {
+      method: "GET",
+      path: "/api/v1/health",
+      responseTimeoutMs: 5_000,
+      signal: controller.signal,
+    });
+    setTimeout(() => controller.abort(), 30);
+    const err = await expectScryError(promise);
+    expect(err.code).toBe("INTERNAL_ERROR");
+    expect(err.details).toMatchObject({ kind: "aborted" });
+  });
+
   test("a response exceeding the response timeout maps to a retryable timeout error", async () => {
     daemon = await startFakeDaemon((_req, _res) => {
       /* never respond */

@@ -77,6 +77,7 @@ const expected = [
   "coven_kill_session",
   "coven_list_harnesses",
   "coven_list_sessions",
+  "coven_read_output",
   "coven_send_input",
   "coven_start_session",
 ];

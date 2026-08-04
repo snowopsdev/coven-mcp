@@ -7,6 +7,8 @@ export type CovenRequestOptions = {
   body?: unknown;
   connectTimeoutMs?: number;
   responseTimeoutMs?: number;
+  /** Cancels the in-flight request (FR-20): the socket is destroyed promptly. */
+  signal?: AbortSignal;
 };
 
 export const MAX_BODY_BYTES = 4 * 1024 * 1024;
@@ -158,6 +160,18 @@ export function covenRequest(socketPath: string, options: CovenRequestOptions): 
         ),
       );
     });
+
+    const onAbort = (): void => {
+      fail(new ScryError("INTERNAL_ERROR", "Request cancelled", false, { kind: "aborted" }));
+    };
+    if (options.signal !== undefined) {
+      if (options.signal.aborted) {
+        onAbort();
+        return;
+      }
+      options.signal.addEventListener("abort", onAbort, { once: true });
+      req.on("close", () => options.signal?.removeEventListener("abort", onAbort));
+    }
 
     req.end(payload);
   });
