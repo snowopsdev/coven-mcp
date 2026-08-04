@@ -9,7 +9,7 @@
 | Project | `scry` — MCP server bridging the Coven daemon to stdio MCP clients |
 | One-sentence summary | Exposes Coven sessions, output, harness capabilities, and memory listing as MCP tools so any stdio-capable MCP client can see and drive Coven without leaving the client |
 | Team | snow (solo) |
-| Repo URL | TODO at freeze |
+| Repo URL | <https://github.com/snowopsdev/scry-mcp> (currently **private** — must be public before submitting) |
 | Freeze tag | `july-hackathon-2026-final` (provisional — confirm against the official brief) |
 | Final commit SHA | TODO at freeze |
 | Demo link | TODO at freeze |

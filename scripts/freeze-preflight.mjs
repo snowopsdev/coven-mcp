@@ -136,6 +136,31 @@ check("clean clone builds and verifies", () => {
   }
 });
 
+check("repository is public and pushed", () => {
+  let head = "";
+  try {
+    head = sh("git", ["rev-parse", "HEAD"]);
+    const remoteHead = sh("git", ["rev-parse", "origin/main"]);
+    assert(remoteHead === head, "origin/main does not match HEAD — push first");
+  } catch (err) {
+    if (/does not match HEAD/.test(err.message)) throw err;
+    throw new Error("no origin/main — add a remote and push");
+  }
+  let visibility = "";
+  try {
+    visibility = JSON.parse(sh("gh", ["repo", "view", "--json", "visibility"])).visibility;
+  } catch {
+    // gh unavailable or unauthenticated: cannot verify, so say so rather than
+    // silently passing a judge-blocking condition.
+    return "pushed; visibility UNVERIFIED (gh unavailable — confirm it is public by hand)";
+  }
+  assert(
+    visibility.toUpperCase() === "PUBLIC",
+    `repository is ${visibility} — judges cannot clone it; run: gh repo edit --visibility public`,
+  );
+  return `public and in sync with HEAD (${head.slice(0, 8)})`;
+});
+
 const TAG = process.env.SCRY_FREEZE_TAG ?? "july-hackathon-2026-final";
 check(`tag ${TAG} (if present) points at HEAD`, () => {
   let target = "";

@@ -44,7 +44,7 @@ Note: the daemon reports `covenVersion: "0.0.0"` even on a 0.0.34 install, so `s
 ## Install and build
 
 ```sh
-git clone <repository-url> scry
+git clone https://github.com/snowopsdev/scry-mcp.git scry
 cd scry
 npm ci
 npm run build
