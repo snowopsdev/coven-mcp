@@ -12,7 +12,7 @@
 | Repo URL | <https://github.com/snowopsdev/coven-mcp> (**must be public before submitting**) |
 | Freeze tag | `july-hackathon-2026-final` |
 | Final commit SHA | TODO at freeze |
-| Demo link | TODO at freeze |
+| Demo | `npm run demo` — a deterministic local command, which the submission guide accepts as a demo artifact. Requires no Coven install, credentials, network, or provider spend. See README § Demo. |
 | License | MIT, unmodified — greenfield, no prior work reused |
 
 **Naming note for reviewers:** the tag is *July*-named while the event runs in August and the submission repository is `opencoven-beta-august-hackathon-2026`. This is intentional and matches the rules verbatim — both the [submission guide](https://hackathon.opencoven.ai/docs/submission-guide.html) and the [official rules](https://hackathon.opencoven.ai/docs/official-rules.html) specify `july-hackathon-2026-final`, and the rules give the full `git tag -a` command using it.
@@ -124,5 +124,6 @@ None claimed. Opportunistic upstream documentation or bug PRs are tracked in `PL
 Tracked in full in `PLAN.md` §8; run `node scripts/freeze-preflight.mjs` to check mechanically.
 
 - Make the repository public — judges cannot clone a private repo, and the preflight fails while it is.
-- Record the demo and fill both placeholder rows above.
+- Fill the commit SHA row above after cutting the tag.
+- Optional: record a video walkthrough. Not required — `npm run demo` already satisfies the guide's demo artifact rule — but a video adds a second, lower-friction path for judges.
 - Diff `LICENSE` and this file against `participant/LICENSE_TEMPLATE.txt` and `participant/HACKATHON_TEMPLATE.md` in the (private) event repository. Both are hand-written here and match the rules text, but neither has been compared against the actual templates.

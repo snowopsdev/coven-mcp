@@ -136,6 +136,13 @@ check("clean clone builds and verifies", () => {
   }
 });
 
+check("demo command runs clean", () => {
+  // `npm run demo` is the submission's demo artifact, so a break in it is a
+  // submission defect, not just a broken script.
+  execFileSync("node", ["scripts/demo.mjs"], { stdio: "pipe" });
+  return "npm run demo exits 0 with no daemon, credentials, or network";
+});
+
 check("repository is public and pushed", () => {
   let head = "";
   try {

@@ -282,7 +282,27 @@ Run a single file with `npm test -- src/sanitizer.test.ts`.
 
 ## Demo
 
-With `coven daemon start` running, an authenticated harness, and an existing project directory, this is the full round trip — the same sequence the demo recording follows:
+**Deterministic, no Coven install required:**
+
+```sh
+npm run demo
+```
+
+This drives the real built server over real MCP stdio against a scripted stand-in daemon on a temporary Unix socket. No credentials, no network, no provider spend, same result every run. It walks six beats: the problem, the server starting, the core workflow (including a write denied by the security gate), where the Coven API is used — printing the actual HTTP request log — the sanitized result, and one limitation.
+
+The interesting moment is the result. The stand-in emits genuinely nasty PTY bytes: ANSI colour, bracketed-paste mode, three carriage-return progress rewrites, and a sentence split across two events. What the LLM receives is:
+
+```text
+● Reading test output
+scanning 100%
+Found it: the assertion compares NaN to NaN, which is never equal.
+```
+
+The progress bar collapsed to its final state, the escape codes are gone, and the split sentence is whole.
+
+### Live workflow against a real daemon
+
+With `coven daemon start` running, an authenticated harness, and an existing project directory, this is the full round trip:
 
 1. **Read, no allowlist.** With `coven-mcp` configured without `COVEN_MCP_ALLOWED_ROOTS`, ask the client to call `coven_health`, then `coven_list_harnesses` and `coven_list_sessions`. You get live daemon state in read-only mode.
 2. **Security gate.** Ask it to start a session in a directory you have not allowlisted. It is denied with `ROOT_NOT_ALLOWED`, naming the variable and the operation — no session is created and the daemon is never called.
@@ -291,9 +311,7 @@ With `coven daemon start` running, an authenticated harness, and an existing pro
 5. **Drive and observe.** `coven_send_input` (remember the trailing newline), then `coven_read_output` — ANSI-free, bounded text with a `complete`/`timeout` tuple.
 6. **Clean up.** `coven_kill_session`, then `coven_get_session` to confirm the status is terminal.
 
-Every step above has been executed against a live `coven 0.0.34` daemon during development. Judges without a Coven install can still evaluate the project fully through `npm run verify`, which exercises the same code paths against a fake daemon.
-
-TODO: public demo recording link.
+Every step above has been executed against a live `coven 0.0.34` daemon during development.
 
 ## Known limitations
 
