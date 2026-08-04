@@ -14,6 +14,40 @@ Three properties matter more than the tool count:
 - **Readable output.** Raw PTY output — ANSI escapes, carriage-return progress bars, lines split across events — is reassembled into plain text, with signed tokens for lossless continuation across calls.
 - **Honest scope.** Everything `scry` cannot do is documented in [Limitations / non-goals](#limitations--non-goals) rather than discovered at runtime.
 
+### Architecture
+
+```mermaid
+flowchart TB
+    agent["LLM in an MCP client<br/>Claude Desktop, Cursor, ..."]
+
+    subgraph scry["coven-mcp"]
+        tools["Tool surface<br/>6 read tools, 3 write tools"]
+        guard["Guards<br/>input validation<br/>health and capability gate<br/>project-root allowlist"]
+        socket["Socket client<br/>timeouts, 4 MiB caps"]
+        boundary["Response boundary<br/>snake_case to camelCase<br/>structured error mapping"]
+        pipeline["Output pipeline<br/>bounded polling<br/>ANSI and CR sanitizer<br/>signed resume token"]
+    end
+
+    daemon["Coven daemon<br/>coven.daemon.v1<br/>no authentication"]
+    pty["Harness PTY sessions"]
+
+    agent <-->|"stdio, JSON-RPC only"| tools
+    tools --> guard
+    guard -.->|"denied: ROOT_NOT_ALLOWED"| tools
+    guard -->|"authorized"| socket
+    socket <-->|"HTTP over $COVEN_HOME/coven.sock"| daemon
+    daemon --> pty
+    socket -->|"session and harness JSON"| boundary
+    socket -->|"raw PTY event stream"| pipeline
+    boundary --> tools
+    pipeline --> tools
+```
+
+Read the diagram as one request travelling down and its response coming back up. Two things about it are the whole point of the project:
+
+- **`Guards` is a trust boundary, not a layer of glue.** The daemon has no authentication, so every request that reaches the socket client has already been validated, version-gated, and — for write tools — authorized against an allowlisted project root. Denials never reach the daemon.
+- **Responses take one of two paths.** Ordinary JSON is normalized and returned; the raw PTY event stream goes through a separate pipeline that sanitizes terminal control codes and issues a signed token so the next call resumes exactly where this one stopped.
+
 ## Why `scry`
 
 OpenCoven already ships MCP technology, so the useful question is what is *not* covered:
