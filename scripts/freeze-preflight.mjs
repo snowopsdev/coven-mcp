@@ -162,6 +162,19 @@ check("repository is public and pushed", () => {
 });
 
 const TAG = process.env.COVEN_MCP_FREEZE_TAG ?? "july-hackathon-2026-final";
+
+check("no August-named tag (the July/August naming trap)", () => {
+  // The event runs in August and its submission repo is August-named, but
+  // both official documents require the July-named tag. A tag "corrected" to
+  // August is unrecoverable after the deadline.
+  const tags = sh("git", ["tag", "--list"]).split("\n").filter(Boolean);
+  const wrong = tags.filter((t) => /august-hackathon-2026-final/.test(t));
+  assert(
+    wrong.length === 0,
+    `found ${wrong.join(", ")} — the required tag is ${TAG}, despite the August-named event repo`,
+  );
+  return `none; required tag remains ${TAG}`;
+});
 check(`tag ${TAG} (if present) points at HEAD`, () => {
   let target = "";
   try {
@@ -179,8 +192,10 @@ for (const r of results) {
 }
 
 console.log("\nStill requires a human (cannot be checked mechanically):");
-console.log("  - Official brief re-verified: deadline, time zone, tag name, README requirements,");
-console.log("    submission issue URL (PLAN.md §8 flags these as unconfirmed)");
+console.log("  - Diff LICENSE and HACKATHON.md against participant/ templates in");
+console.log("    OpenCoven/opencoven-beta-august-hackathon-2026 (private — request access)");
+console.log(`  - Confirm the issue form still asks for the tag "${TAG}" (July-named,`);
+console.log("    despite the August-named event repo — see PLAN.md §8)");
 console.log("  - Demo link opens in a logged-out browser");
 console.log("  - Every README command re-run by hand from the clean clone");
 

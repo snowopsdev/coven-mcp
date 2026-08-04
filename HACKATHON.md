@@ -10,7 +10,7 @@
 | One-sentence summary | Exposes Coven sessions, output, harness capabilities, and memory listing as MCP tools so any stdio-capable MCP client can see and drive Coven without leaving the client |
 | Team | snow (solo) |
 | Repo URL | <https://github.com/snowopsdev/coven-mcp> (currently **private** — must be public before submitting) |
-| Freeze tag | `july-hackathon-2026-final` (provisional — confirm against the official brief) |
+| Freeze tag | `july-hackathon-2026-final` (confirmed against the official rules and submission guide — July-named despite the August event and August-named submission repo) |
 | Final commit SHA | TODO at freeze |
 | Demo link | TODO at freeze |
 | License | MIT, unmodified — greenfield, no prior work reused |
