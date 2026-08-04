@@ -2,19 +2,55 @@
 
 An MCP server that bridges the Coven daemon to any stdio-capable MCP client.
 
-## Overview
+## What it does
 
-Coven runs agent sessions locally behind an HTTP-over-Unix-socket API. If you work inside Claude Desktop, Cursor, or another MCP client, that state is invisible: you cannot see which sessions are running, read what they printed, or drive them without leaving the client you are already in.
-
-`coven-mcp` closes that gap. It is a standalone stdio MCP server that exposes the Coven daemon's session lifecycle, event output, harness capability manifests, and memory listing as nine MCP tools. Point any stdio-capable MCP client at it and Coven becomes first-class in that client — with no changes to Coven itself.
+`coven-mcp` is a standalone stdio MCP server that exposes the Coven daemon's session lifecycle, event output, harness capability manifests, and memory listing as nine MCP tools. Point any stdio-capable MCP client at it and Coven becomes first-class in that client — with no changes to Coven itself.
 
 Three properties matter more than the tool count:
 
 - **Safe by default.** Write tools (start, input, kill) are denied unless you explicitly allowlist project roots. Unset means read-only. See [Security and privacy](#security-and-privacy).
 - **Readable output.** Raw PTY output — ANSI escapes, carriage-return progress bars, lines split across events — is reassembled into plain text, with signed tokens for lossless continuation across calls.
-- **Honest scope.** Everything `coven-mcp` cannot do is documented in [Limitations / non-goals](#limitations--non-goals) rather than discovered at runtime.
+- **Honest scope.** Everything `coven-mcp` cannot do is documented in [Known limitations](#known-limitations) rather than discovered at runtime.
 
-### Architecture
+## Problem
+
+Coven runs agent sessions locally behind an HTTP-over-Unix-socket API. If you work inside Claude Desktop, Cursor, or another MCP client, that state is invisible: you cannot see which sessions are running, read what they printed, or drive them without leaving the client you are already in.
+
+The result is context-switching that defeats the point of having an agent runtime. You end up with a terminal open beside the tool you actually work in, reconciling two views of the same work by hand.
+
+## Why OpenCoven
+
+OpenCoven already ships MCP technology, so the useful question is what is *not* covered:
+
+| Project | What it is | Overlap with `coven-mcp` |
+| --- | --- | --- |
+| `coven-reach` | A standalone stdio MCP server for filesystem and web operations | None — different tool domain |
+| `coven-codeflow` | An MCP **client** that consumes local and remote MCP servers | None — opposite side of the protocol |
+| `coven-mcp` | An MCP **server** over the Coven daemon's own API | The daemon surface itself |
+
+No reviewed first-party server exposes the daemon's session lifecycle, event stream, harness capabilities, and memory listing as MCP tools. `coven-mcp` is additive: it adapts an existing local contract, it does not reimplement or compete with either project.
+
+This also sits with stated upstream direction rather than against it — `coven-familiar-spec` lists an MCP server registry as intent, while `coven-harness-capabilities` lists cross-harness MCP exposure as an explicit current non-goal. The bridge makes Coven reachable from where developers already work, which raises the value of the daemon API without asking upstream to change it.
+
+## How OpenCoven was used
+
+`coven-mcp` integrates with Coven **at runtime**, over its documented `coven.daemon.v1` HTTP-over-Unix-socket API. No Coven code is vendored, copied, or modified. The daemon is a dependency, not a donor.
+
+Built and tested against `OpenCoven/coven` commit `1fe9a744356ea3af6b47a3d497a483513b36eb15` (CLI `0.0.34`).
+
+Every non-health call is gated on a live handshake: `ok === true`, `apiVersion === "coven.daemon.v1"`, and the specific capability the operation needs (`sessions` or `events`) advertised as exactly `true`. String-valued capabilities such as `eventCursor: "sequence"` are treated as diagnostic, never as permission. The legacy `/api/v1/api-version` route is deliberately unused — upstream documents it as not proof of support.
+
+Five upstream behaviors turned out to be load-bearing and were verified against the live daemon rather than assumed from documentation:
+
+- Requests are camelCase and session records reply in snake_case — but the **events envelope is camelCase** (`events`, `nextCursor`, `hasMore`) while its event objects stay snake_case (`payload_json`). The casing convention is not uniform across the API.
+- `payload_json` is a JSON **string**, requiring a second parse.
+- Event kinds are `output`, `input`, `status`, `exit`, and an undocumented **`kill`**. Unknown kinds are counted and skipped, never fatal.
+- `GET /api/v1/sessions` returns a bare array without pagination parameters and an envelope with them; `GET /api/v1/memory` returns a bare array.
+- The daemon reports `covenVersion: "0.0.0"` on a 0.0.34 install, so version gating must rely on `apiVersion` and capabilities.
+
+Upstream ships roughly ten commits a day at version `0.0.0`, so treat the pinned SHA as the contract and revalidate before trusting a newer build. These findings are candidate upstream documentation contributions; see [HACKATHON.md](HACKATHON.md).
+
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -48,21 +84,7 @@ Read the diagram as one request travelling down and its response coming back up.
 - **`Guards` is a trust boundary, not a layer of glue.** The daemon has no authentication, so every request that reaches the socket client has already been validated, version-gated, and — for write tools — authorized against an allowlisted project root. Denials never reach the daemon.
 - **Responses take one of two paths.** Ordinary JSON is normalized and returned; the raw PTY event stream goes through a separate pipeline that sanitizes terminal control codes and issues a signed token so the next call resumes exactly where this one stopped.
 
-## Why `coven-mcp`
-
-OpenCoven already ships MCP technology, so the useful question is what is *not* covered:
-
-| Project | What it is | Overlap with `coven-mcp` |
-| --- | --- | --- |
-| `coven-reach` | A standalone stdio MCP server for filesystem and web operations | None — different tool domain |
-| `coven-codeflow` | An MCP **client** that consumes local and remote MCP servers | None — opposite side of the protocol |
-| `coven-mcp` | An MCP **server** over the Coven daemon's own API | The daemon surface itself |
-
-No reviewed first-party server exposes the daemon's session lifecycle, event stream, harness capabilities, and memory listing as MCP tools. `coven-mcp` is additive: it adapts an existing local contract, it does not reimplement or compete with either project.
-
-This also sits with stated upstream direction rather than against it — `coven-familiar-spec` lists an MCP server registry as intent, while `coven-harness-capabilities` lists cross-harness MCP exposure as an explicit current non-goal.
-
-## Prerequisites and supported platforms
+## Prerequisites
 
 | Requirement | Verified against |
 | --- | --- |
@@ -71,11 +93,9 @@ This also sits with stated upstream direction rather than against it — `coven-
 | Coven | CLI `0.0.34`, daemon API `coven.daemon.v1` |
 | Daemon state | Running (`coven daemon start`); `coven doctor` is a good pre-flight |
 
-Windows is out of scope (see [Limitations](#limitations--non-goals)). The live write demo additionally needs an authenticated harness — harness capability discovery alone does not prove a provider is authenticated.
+Windows is out of scope (see [Known limitations](#known-limitations)). Building and verifying need none of the above beyond Node — only the live workflow needs a running daemon, and the write demo additionally needs an authenticated harness, since harness capability discovery alone does not prove a provider is authenticated.
 
-Note: the daemon reports `covenVersion: "0.0.0"` even on a 0.0.34 install, so `coven-mcp` gates compatibility on `apiVersion` and advertised capabilities, never on that version string.
-
-## Install and build
+## Installation
 
 ```sh
 git clone https://github.com/snowopsdev/coven-mcp.git
@@ -86,11 +106,24 @@ npm run build
 
 This produces a runnable entry point at `dist/index.js` with a shebang and a `coven-mcp` bin alias. No credentials, network access, or running daemon are needed to build.
 
-## MCP client configuration
+## Configuration
 
 `coven-mcp` speaks MCP over stdio. Add it to your client's server list, replacing the placeholder path with your clone's absolute path.
 
-Claude Desktop (`claude_desktop_config.json`) or any client using the same schema:
+Read-only mode is the default and the safe starting point — omit `env` entirely and every write tool is denied:
+
+```json
+{
+  "mcpServers": {
+    "coven-mcp": {
+      "command": "node",
+      "args": ["/path/to/coven-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+To enable write tools, allowlist one or more project roots:
 
 ```json
 {
@@ -106,27 +139,7 @@ Claude Desktop (`claude_desktop_config.json`) or any client using the same schem
 }
 ```
 
-Read-only mode is the default and the safe starting point — omit `env` entirely and every write tool is denied:
-
-```json
-{
-  "mcpServers": {
-    "coven-mcp": {
-      "command": "node",
-      "args": ["/path/to/coven-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-Two behaviors worth knowing:
-
-- **Tool discovery is stable.** All nine tools list even when the daemon is stopped, so you can configure `coven-mcp` before starting Coven. Tools return descriptive errors instead of disappearing.
-- **Daemon restarts need no client restart.** Health is re-checked per call (cached ≤1.5 s), so starting or restarting the daemon recovers automatically.
-
-Environment changes *do* require reconnecting the MCP server — the allowlist is read once at startup.
-
-## Environment variables
+### Environment variables
 
 | Variable | Purpose |
 | --- | --- |
@@ -140,6 +153,35 @@ Socket discovery order: `COVEN_SOCKET` (literal path) → `$COVEN_HOME/coven.soc
 `COVEN_MCP_ALLOWED_ROOTS` entries must be absolute, existing directories. If **any** entry is invalid, `coven-mcp` exits at startup with a message naming the entry's position (never its value) — a misconfigured allowlist is never partially honored. Roots are canonicalized (symlinks resolved) before use, and containment is checked per path component, so `/work/app2` is never authorized by an allowlist entry of `/work/app`.
 
 Boolean `COVEN_MCP_*` variables recognize only the exact literal `true`. `1`, `TRUE`, and `yes` are all treated as disabled.
+
+Environment changes require reconnecting the MCP server — the allowlist is read once at startup.
+
+## Run
+
+Normally your MCP client spawns `coven-mcp` for you: start the daemon, then reload the client.
+
+```sh
+coven daemon start
+```
+
+Then reload or restart your MCP client. The nine `coven_*` tools appear in its tool list, and `coven_health` is the natural first call — it reports the daemon's API version and advertised capabilities.
+
+Two behaviors worth knowing:
+
+- **Tool discovery is stable.** All nine tools list even when the daemon is stopped, so you can configure `coven-mcp` before starting Coven. Tools return descriptive errors instead of disappearing.
+- **Daemon restarts need no client restart.** Health is re-checked per call (cached ≤1.5 s), so starting or restarting the daemon recovers automatically.
+
+To run the server by hand without any client — useful for a sanity check — pipe JSON-RPC frames into it on stdin:
+
+```sh
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"cli","version":"0"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"coven_health","arguments":{}}}' \
+  | node dist/index.js
+```
+
+The last line printed is the `coven_health` result. With the daemon running it reports `"reachable":true` and the live `apiVersion`; with the daemon stopped it reports `"reachable":false` and a `DAEMON_UNAVAILABLE` error rather than failing.
 
 ## Tool reference
 
@@ -213,40 +255,7 @@ Failures return `isError: true` with a JSON body `{ code, message, retryable, de
 | `OUTPUT_STATE_TOO_LARGE` | no | Output state exceeds the text/state bounds; `details` carries a usable token |
 | `INTERNAL_ERROR` | no | Unexpected failure or cancellation |
 
-## Coven API compatibility and pinned SHA
-
-Built and tested against `OpenCoven/coven` commit `1fe9a744356ea3af6b47a3d497a483513b36eb15` (CLI `0.0.34`), API `coven.daemon.v1`.
-
-`coven-mcp` gates every non-health call on a live handshake: `ok === true`, `apiVersion === "coven.daemon.v1"`, and the specific capability the operation needs (`sessions` or `events`) advertised as exactly `true`. String-valued capabilities such as `eventCursor: "sequence"` are treated as diagnostic, never as permission. The legacy `/api/v1/api-version` route is deliberately unused — upstream documents it as not proof of support.
-
-Four upstream behaviors are load-bearing and were verified live rather than assumed:
-
-- Requests are camelCase; session records reply in snake_case — but the **events** envelope is camelCase (`events`, `nextCursor`, `hasMore`) while its event objects stay snake_case (`payload_json`).
-- `payload_json` is a JSON **string** requiring a second parse.
-- Event kinds are `output`, `input`, `status`, `exit`, and an undocumented `kill`. Unknown kinds are counted and skipped, never fatal.
-- `GET /api/v1/memory` returns a bare array.
-
-Upstream ships roughly ten commits a day at version `0.0.0`, so treat the pinned SHA as the contract and revalidate before trusting a newer build.
-
-## Security and privacy
-
-**Trust model.** The Coven daemon has no authentication: trust is same-user access to a local Unix socket. `coven-mcp` therefore inherits your full same-user authority, and anything it exposes to an LLM can, in principle, drive PTY processes on your machine. `coven-mcp`'s job is to narrow that authority before an LLM touches it.
-
-**Write authorization.** The three write tools (`coven_start_session`, `coven_send_input`, `coven_kill_session`) are gated by `COVEN_MCP_ALLOWED_ROOTS`. Unset or empty means read-only mode — deny by default. `coven_start_session` canonicalizes the requested `projectRoot` and `cwd` (resolving symlinks) and requires both to land inside an allowed root, with `cwd` inside `projectRoot`. `coven_send_input` and `coven_kill_session` never trust a caller-supplied root: they fetch the daemon's own session record and authorize its canonical `project_root`. Missing paths, symlink escapes, `..` traversal, dead directories, and lookup failures all fail closed.
-
-**The allowlist is authorization, not a sandbox.** A harness started inside an allowed root still runs with your full OS authority — it can read your home directory, use your credentials, and make network calls. The allowlist controls where sessions may be *started and driven from this MCP surface*; it does not confine what a running harness can do.
-
-**Disclosure surface (read tools).** Read tools work without an allowlist and can disclose to the connected MCP client: session titles and absolute project paths, sanitized session output, harness manifest paths (which may be absolute), and memory titles/relative paths. Memory *excerpts* are blank unless you set `COVEN_MCP_INCLUDE_MEMORY_EXCERPTS=true`, and entries flagged `revealRequired` or classified anything other than `public` stay redacted even then.
-
-**Prompt injection.** Session output, titles, and memory excerpts are untrusted content that may contain instructions aimed at the LLM reading them. `coven-mcp` sanitizes encoding (ANSI escapes, carriage returns, control characters) — it cannot sanitize meaning. Tool results are data, not instructions; `coven-mcp` never embeds returned content in its own tool descriptions or error messages.
-
-**Resume tokens.** `coven_read_output` continuation tokens are HMAC-signed with a random per-process secret, bound to their session id, and size-capped. They are integrity-protected but **not encrypted** — the payload includes un-emitted output state — so treat tokens as session output: never log or share them. They intentionally die when the server restarts (see Troubleshooting for recovery).
-
-**Logging.** `coven-mcp` never logs prompts, input data, session output, memory excerpts, environment values, resume tokens, or raw daemon bodies. Stdout carries only MCP JSON-RPC; stderr carries metadata-only diagnostics (a startup misconfiguration message names an allowlist entry's *position*, never its value).
-
-**Residual risk.** Anyone with same-user access to your machine can talk to the daemon directly, bypassing `coven-mcp` entirely. `coven-mcp` narrows what the *connected LLM* can do; it does not harden the daemon itself.
-
-## Verification and tests
+## Test or verify
 
 ```sh
 npm ci
@@ -263,15 +272,15 @@ npm run verify
 | `build` | Production build produces a runnable entry point |
 | stdio smoke | Raw JSON-RPC `initialize` → `tools/list` → `coven_health` against the built binary; asserts stdout carries only JSON-RPC, that discovery is stable with the daemon down, and that a misconfigured allowlist exits non-zero |
 | package check | Tarball contains only `dist/`, README, LICENSE, `package.json`; shebang, `bin`, and `engines` wired |
-| docs check | All 15 required README sections present and non-empty; HACKATHON.md carries the pinned SHA and tag |
+| docs check | Every required README section present and non-empty; HACKATHON.md carries the pinned SHA and tag |
 
 Contract tests run against a **real HTTP server bound to a temporary Unix socket** — `node:http` internals are never mocked. They cover the acceptance matrix: array/envelope pagination, malformed payloads, cursor regression, split ANSI/CR state across resume tokens, oversized events, size limits, symlink and prefix escapes, cross-root session writes, structured error mappings, and stdout purity.
 
-What `verify` does **not** prove: provider authentication and a real harness launch. Those need the live path below.
+What `verify` does **not** prove: provider authentication and a real harness launch. Those need the live workflow in [Demo](#demo).
 
 Run a single file with `npm test -- src/sanitizer.test.ts`.
 
-## Live demo workflow
+## Demo
 
 With `coven daemon start` running, an authenticated harness, and an existing project directory, this is the full round trip — the same sequence the demo recording follows:
 
@@ -282,11 +291,11 @@ With `coven daemon start` running, an authenticated harness, and an existing pro
 5. **Drive and observe.** `coven_send_input` (remember the trailing newline), then `coven_read_output` — ANSI-free, bounded text with a `complete`/`timeout` tuple.
 6. **Clean up.** `coven_kill_session`, then `coven_get_session` to confirm the status is terminal.
 
-Every step above has been executed against a live `coven 0.0.34` daemon during development.
+Every step above has been executed against a live `coven 0.0.34` daemon during development. Judges without a Coven install can still evaluate the project fully through `npm run verify`, which exercises the same code paths against a fake daemon.
 
-TODO: Block 9 — public demo recording link.
+TODO: public demo recording link.
 
-## Limitations / non-goals
+## Known limitations
 
 Deliberately out of scope for v1, with the reason:
 
@@ -304,13 +313,13 @@ Natural next steps, in rough order of value: streaming via the CLI's `--stream-j
 
 **`DAEMON_UNAVAILABLE`** — the daemon socket is absent or unreachable. Start it with `coven daemon start`, then retry; `coven-mcp` recovers without a restart (health is re-checked on every call, cached for at most 1.5 s).
 
-**`INCOMPATIBLE_DAEMON`** — the daemon speaks something other than `coven.daemon.v1`. Check `coven --version` against the pinned compatibility section above.
+**`INCOMPATIBLE_DAEMON`** — the daemon speaks something other than `coven.daemon.v1`. Check `coven --version` against the pinned version in [How OpenCoven was used](#how-opencoven-was-used).
 
 **`INVALID_RESUME_TOKEN` after an MCP client restart** — resume tokens are signed with a per-process secret and die when `coven-mcp` restarts (MCP clients restart stdio servers on config changes and relaunches). Recovery: call `coven_read_output` again with `afterSeq` set to the last `lastSeq` you observed — every result includes `lastSeq`. You lose only the un-emitted partial-line state, never full lines already returned.
 
 **`ROOT_NOT_ALLOWED`** — the operation's project root is not inside `COVEN_MCP_ALLOWED_ROOTS` (or the allowlist is unset, which means read-only mode). Set the variable to a colon-separated list of absolute project directories and reconnect the MCP server.
 
-**`coven-mcp` exits immediately at startup** — an `COVEN_MCP_ALLOWED_ROOTS` entry is invalid (relative, missing, or not a directory). The stderr message names the entry position; fix that entry and restart.
+**`coven-mcp` exits immediately at startup** — a `COVEN_MCP_ALLOWED_ROOTS` entry is invalid (relative, missing, or not a directory). The stderr message names the entry position; fix that entry and restart.
 
 **Tools list but every call fails** — expected when the daemon is down; discovery is intentionally stable. Check `coven_health` first: it reports the underlying reason instead of erroring.
 
@@ -320,12 +329,24 @@ Natural next steps, in rough order of value: streaming via the CLI's `--stream-j
 
 **A session starts but produces no output** — confirm the harness is authenticated (`coven doctor`). Harness discovery does not imply provider auth, and an unauthenticated harness can exit immediately.
 
-## Hackathon disclosure and upstream use
+## Security and privacy
 
-Built solo for the OpenCoven Beta Hackathon 2026, greenfield during the event, under an unmodified MIT license. `coven-mcp` integrates with Coven at runtime over its documented socket API; no upstream code is vendored or modified.
+**Trust model.** The Coven daemon has no authentication: trust is same-user access to a local Unix socket. `coven-mcp` therefore inherits your full same-user authority, and anything it exposes to an LLM can, in principle, drive PTY processes on your machine. `coven-mcp`'s job is to narrow that authority before an LLM touches it.
 
-See [HACKATHON.md](HACKATHON.md) for pinned SHAs, the freeze tag, and submission details.
+**Write authorization.** The three write tools (`coven_start_session`, `coven_send_input`, `coven_kill_session`) are gated by `COVEN_MCP_ALLOWED_ROOTS`. Unset or empty means read-only mode — deny by default. `coven_start_session` canonicalizes the requested `projectRoot` and `cwd` (resolving symlinks) and requires both to land inside an allowed root, with `cwd` inside `projectRoot`. `coven_send_input` and `coven_kill_session` never trust a caller-supplied root: they fetch the daemon's own session record and authorize its canonical `project_root`. Missing paths, symlink escapes, `..` traversal, dead directories, and lookup failures all fail closed.
+
+**The allowlist is authorization, not a sandbox.** A harness started inside an allowed root still runs with your full OS authority — it can read your home directory, use your credentials, and make network calls. The allowlist controls where sessions may be *started and driven from this MCP surface*; it does not confine what a running harness can do.
+
+**Disclosure surface (read tools).** Read tools work without an allowlist and can disclose to the connected MCP client: session titles and absolute project paths, sanitized session output, harness manifest paths (which may be absolute), and memory titles/relative paths. Memory *excerpts* are blank unless you set `COVEN_MCP_INCLUDE_MEMORY_EXCERPTS=true`, and entries flagged `revealRequired` or classified anything other than `public` stay redacted even then.
+
+**Prompt injection.** Session output, titles, and memory excerpts are untrusted content that may contain instructions aimed at the LLM reading them. `coven-mcp` sanitizes encoding (ANSI escapes, carriage returns, control characters) — it cannot sanitize meaning. Tool results are data, not instructions; `coven-mcp` never embeds returned content in its own tool descriptions or error messages.
+
+**Resume tokens.** `coven_read_output` continuation tokens are HMAC-signed with a random per-process secret, bound to their session id, and size-capped. They are integrity-protected but **not encrypted** — the payload includes un-emitted output state — so treat tokens as session output: never log or share them. They intentionally die when the server restarts (see [Troubleshooting](#troubleshooting) for recovery).
+
+**Logging.** `coven-mcp` never logs prompts, input data, session output, memory excerpts, environment values, resume tokens, or raw daemon bodies. Stdout carries only MCP JSON-RPC; stderr carries metadata-only diagnostics (a startup misconfiguration message names an allowlist entry's *position*, never its value).
+
+**Residual risk.** Anyone with same-user access to your machine can talk to the daemon directly, bypassing `coven-mcp` entirely. `coven-mcp` narrows what the *connected LLM* can do; it does not harden the daemon itself.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Built solo for the OpenCoven Beta Hackathon 2026, greenfield during the event. See [HACKATHON.md](HACKATHON.md) for pinned SHAs, the freeze tag, and submission details.

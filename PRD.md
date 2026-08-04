@@ -9,7 +9,7 @@
 | Derived from | `PLAN.md` |
 | Coven baseline | `1fe9a744356ea3af6b47a3d497a483513b36eb15` (`coven 0.0.34` locally) |
 | MCP comparison | Public org view on Aug 3: `coven-reach@07f5c9d`, `coven-codeflow@5fd9df1` |
-| Ship deadline | Provisional: Fri Aug 7 2026, 23:59 EDT; official brief must be rechecked |
+| Ship deadline | **Confirmed:** before Sat Aug 8 2026, 00:00 EDT (`America/New_York`) |
 | License | MIT (unmodified) |
 
 ---
@@ -68,7 +68,7 @@ For v1, state these plainly in README:
 | M3 | Test suite from clean clone | green, no credentials required |
 | M4 | Write ops blocked outside allowlist | 100% |
 | M5 | Secrets in repo | zero |
-| M6 | Required README sections present and non-empty | 15/15 |
+| M6 | Guide-required README sections present, non-empty, in order | 14/14 |
 | M7 | MCP stdout protocol contamination | zero non-JSON-RPC writes |
 | M8 | Event response size | always bounded; resumable when truncated or timed out |
 | M9 | Live demo after prerequisites | ≤5 min |
@@ -375,7 +375,7 @@ Not met ⇒ **descope immediately** to the Familiar Contract validator per `PLAN
 
 ## 11. Open questions
 
-1. **BLOCKING FOR SUBMISSION, NOT BUILD — official brief unavailable.** The documented `OpenCoven/opencoven-beta-july-hackathon-2026` repository/submission URL was not accessible during this review. Reconfirm the deadline, tag, required README content, license/DCO rules, scoring, and submission form before Block 8.
+1. **Resolved Aug 4, 2026 — official brief verified** via <https://hackathon.opencoven.ai/>. Deadline (before Sat Aug 8, 00:00 EDT), freeze tag (`july-hackathon-2026-final`), submission URL, MIT/DCO rules, and the ≤5-minute demo rule all match what this document assumed. Two corrections landed: the README section list is the guide's, not ours (PLAN §6), and scoring is 100 core / 60 to qualify / 25 bonus with seven unweighted criteria. **Residual:** the event repository is unreachable unauthenticated, so `participant/LICENSE_TEMPLATE.txt` and `participant/HACKATHON_TEMPLATE.md` still need diffing against our hand-written versions before freeze.
 2. The local `GET /api/v1/memory` response currently contains zero entries. Seed a non-sensitive demo fixture through supported Coven behavior, or deliberately demonstrate an honest empty result; never open the memory database directly.
 3. Does `coven doctor` confirm at least one authenticated harness for the live write demo? Harness capability discovery alone does not prove provider authentication.
 4. Publish to npm, or repo-only? **Resolved Aug 4:** @@@ is unavailable — an unrelated Solana-wallet MCP server published under that name on 2026-07-06 — and @@@. The package and repository are therefore named `coven-mcp`, which is free on npm and GitHub. Whether to actually publish remains open; publishing strengthens reproducibility and costs ~30 min. Either choice still requires a compiled entry point and clean-clone package smoke test.
