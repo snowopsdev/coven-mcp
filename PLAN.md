@@ -20,9 +20,9 @@
 - Aligned with stated direction (`coven-familiar-spec` lists an MCP server registry as intent) but not duplicating in-flight work (`coven-harness-capabilities` lists cross-harness MCP exposure as a current non-goal).
 - Integrates at runtime → scores on both "OpenCoven use" (20) and "product experience and fit" (10).
 
-### Review baseline (Aug 3, 2026)
+### Review baseline (refreshed Aug 4, 2026)
 
-- This directory currently contains only `PLAN.md` and `PRD.md`; it is not yet a Git repository and has no implementation or tests. Block 0 remains the first build step.
+- **Blocks 0–8 are complete** (12 signed-off commits). All nine v1 tools ship; `npm run verify` is green from a clean clone in ~4s (typecheck, lint, 137 tests, build, stdio smoke, package check, docs check). Remaining: Block 9 (demo recording) and Block 10 (freeze), both gated on inputs only a human can supply — see the status note in §4.
 - Live handshake verified against local `coven 0.0.34`: `GET /api/v1/health` returned `ok: true`, `apiVersion: "coven.daemon.v1"`, and `sessions`/`events` capabilities enabled.
 - API assumptions below were rechecked against `OpenCoven/coven` commit `1fe9a744356ea3af6b47a3d497a483513b36eb15`. Pin this SHA until the implementation passes against a newer reviewed commit.
 - The narrower novelty comparison covered the public OpenCoven repositories visible on Aug 3 and pins `coven-reach` at `07f5c9d5e4863c1a9a187a070e413d51110ad610` and `coven-codeflow` at `5fd9df1e5133c72a1373ff01f7b6416dfe30534b`. The familiar and harness-capability specs are within the pinned `coven` commit.
@@ -102,6 +102,12 @@ Total ≈ 24.5h. Checkpoints are **abort gates**, not suggestions.
 | 8 | README (15 required sections) + HACKATHON.md complete | 3.0 | Every section non-empty |
 | 9 | Demo recording (≤5 min) | 2.0 | Uploaded, public, link works |
 | 10 | Freeze + preflight + submission issue | 1.5 | Tag pushed, issue filed |
+
+### Status (Aug 4, 2026)
+
+Blocks 0–8 complete and committed. **Checkpoint A passed** at Block 2 — the descope ladder below was never needed and is retained only as a record of the decision.
+
+Blocks 9–10 are blocked on human-only inputs: recording and hosting the demo, creating the Git remote, and re-verifying the official brief. `node scripts/freeze-preflight.mjs` automates every mechanically checkable item of §8 and currently reports 8 passes with 2 expected failures — the four submission placeholders (repo URL, final SHA, demo link ×2) that cannot be filled until those inputs exist.
 
 ### CHECKPOINT A — end of Block 2 (~6h in)
 
