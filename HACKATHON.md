@@ -15,7 +15,7 @@
 | Demo | `npm run demo` — a deterministic local command, which the submission guide accepts as a demo artifact. Requires no Coven install, credentials, network, or provider spend. See README § Demo. |
 | License | MIT, unmodified — greenfield, no prior work reused |
 
-**Naming note for reviewers:** the tag matches the event repository, `opencoven-beta-august-hackathon-2026`. The published [submission guide](https://hackathon.opencoven.ai/docs/submission-guide.html) and [official rules](https://hackathon.opencoven.ai/docs/official-rules.html) still print a July-named tag and a July-named repository URL; both appear to be stale carry-overs from when the rules were published in late July for an August event.
+**Naming note for reviewers:** the tag matches the event repository, `opencoven-beta-august-hackathon-2026`, and both the submission guide and the official rules confirm it as of Aug 5.
 
 ## How to evaluate this in five minutes
 
