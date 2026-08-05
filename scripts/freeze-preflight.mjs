@@ -170,18 +170,13 @@ check("repository is public and pushed", () => {
 
 const TAG = process.env.COVEN_MCP_FREEZE_TAG ?? "august-hackathon-2026-final";
 
-check("no July-named tag (the published docs are stale here)", () => {
-  // The public submission guide and rules both print july-hackathon-2026-final,
-  // but the event repository is August-named and the entrant confirmed the
-  // August tag from the submission form. Copying the tag out of the published
-  // docs is therefore the mistake to catch, and it is unrecoverable after the
-  // deadline.
+check("no obsolete July-named tag", () => {
+  // The public guide and rules briefly printed a July tag before being corrected
+  // on Aug 5. Keep this regression guard because cached copies or old notes can
+  // still reintroduce a tag that the current submission materials do not accept.
   const tags = sh("git", ["tag", "--list"]).split("\n").filter(Boolean);
   const wrong = tags.filter((t) => /july-hackathon-2026-final/.test(t));
-  assert(
-    wrong.length === 0,
-    `found ${wrong.join(", ")} — that is the string the public docs print, but the required tag is ${TAG}`,
-  );
+  assert(wrong.length === 0, `found obsolete tag ${wrong.join(", ")} — the required tag is ${TAG}`);
   return `none; required tag remains ${TAG}`;
 });
 check(`tag ${TAG} (if present) points at HEAD`, () => {
@@ -203,8 +198,7 @@ for (const r of results) {
 console.log("\nStill requires a human (cannot be checked mechanically):");
 console.log("  - Diff LICENSE and HACKATHON.md against participant/ templates in");
 console.log("    OpenCoven/opencoven-beta-august-hackathon-2026 (private — request access)");
-console.log(`  - Confirm the issue form still asks for the tag "${TAG}" (July-named,`);
-console.log("    despite the August-named event repo — see PLAN.md §8)");
+console.log(`  - Confirm the issue form still asks for the tag "${TAG}"`);
 console.log("  - Demo link opens in a logged-out browser");
 console.log("  - Every README command re-run by hand from the clean clone");
 

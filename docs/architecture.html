@@ -1,3 +1,6 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>coven-mcp — Architecture</title>
 <style>
   :root {
@@ -186,8 +189,8 @@
       <dl class="facts">
         <div class="fact"><dt>Tools</dt><dd>9</dd></div>
         <div class="fact"><dt>Modules</dt><dd>11</dd></div>
-        <div class="fact"><dt>Source LOC</dt><dd>1,844</dd></div>
-        <div class="fact"><dt>Tests</dt><dd>137</dd></div>
+        <div class="fact"><dt>Source LOC</dt><dd>1,846</dd></div>
+        <div class="fact"><dt>Tests</dt><dd>155</dd></div>
         <div class="fact"><dt>Error codes</dt><dd>11</dd></div>
         <div class="fact"><dt>Deps</dt><dd>2</dd></div>
       </dl>
@@ -234,7 +237,7 @@
             <tr><td class="mono">daemon-client.ts</td><td class="num">186</td><td>transport</td><td>HTTP over Unix socket: timeouts, 4 MiB caps, abort propagation, error-envelope mapping.</td><td class="mono">errors</td></tr>
             <tr><td class="mono">normalize.ts</td><td class="num">329</td><td>boundary</td><td>The single snake_case → camelCase boundary, plus the memory excerpt redaction policy.</td><td class="mono">errors</td></tr>
             <tr><td class="mono">read-output.ts</td><td class="num">297</td><td>output pipeline</td><td>Bounded polling reader with cursor guards, budgets, and one documented stop tuple.</td><td class="mono">errors, resume-token, sanitizer</td></tr>
-            <tr><td class="mono">sanitizer.ts</td><td class="num">141</td><td>output pipeline</td><td>Streaming terminal state machine with compacted, resumable parser state.</td><td class="mono">—</td></tr>
+            <tr><td class="mono">sanitizer.ts</td><td class="num">143</td><td>output pipeline</td><td>Streaming terminal state machine with compacted, resumable parser state.</td><td class="mono">—</td></tr>
             <tr><td class="mono">resume-token.ts</td><td class="num">108</td><td>output pipeline</td><td>HMAC-signed continuation tokens, session-bound and size-capped.</td><td class="mono">errors</td></tr>
             <tr><td class="mono">errors.ts</td><td class="num">31</td><td>foundation</td><td>The error type and the closed set of eleven codes.</td><td class="mono">—</td></tr>
             <tr><td class="mono">socket-path.ts</td><td class="num">11</td><td>foundation</td><td>Socket path resolution precedence.</td><td class="mono">—</td></tr>
@@ -422,7 +425,7 @@
           <tbody>
             <tr><td class="mono">typecheck</td><td>Strict TypeScript, no emit errors.</td></tr>
             <tr><td class="mono">lint</td><td>Biome lint and format across src, test, and scripts.</td></tr>
-            <tr><td class="mono">test</td><td>137 unit and contract tests.</td></tr>
+            <tr><td class="mono">test</td><td>155 unit and contract tests.</td></tr>
             <tr><td class="mono">build</td><td>Production build yields a runnable entry point.</td></tr>
             <tr><td class="mono">stdio smoke</td><td>Stdout purity, stable discovery with the daemon down, non-zero exit on misconfiguration.</td></tr>
             <tr><td class="mono">package check</td><td>Tarball contents, shebang, bin, and engines.</td></tr>
@@ -435,8 +438,8 @@
         <table>
           <thead><tr><th class="mono">File</th><th class="num">Tests</th><th class="mono">File</th><th class="num">Tests</th></tr></thead>
           <tbody>
-            <tr><td class="mono">sanitizer</td><td class="num">23</td><td class="mono">allowlist</td><td class="num">10</td></tr>
-            <tr><td class="mono">read-output</td><td class="num">19</td><td class="mono">health-gate</td><td class="num">9</td></tr>
+            <tr><td class="mono">sanitizer</td><td class="num">39</td><td class="mono">allowlist</td><td class="num">10</td></tr>
+            <tr><td class="mono">read-output</td><td class="num">21</td><td class="mono">health-gate</td><td class="num">9</td></tr>
             <tr><td class="mono">server-lifecycle</td><td class="num">14</td><td class="mono">server</td><td class="num">9</td></tr>
             <tr><td class="mono">normalize</td><td class="num">13</td><td class="mono">server-read-output</td><td class="num">8</td></tr>
             <tr><td class="mono">daemon-client</td><td class="num">12</td><td class="mono">server-memory</td><td class="num">4</td></tr>
@@ -481,7 +484,7 @@
     </section>
 
     <footer>
-      coven-mcp v0.1.0 · MIT · generated 2026-08-04 · machine-readable companion: <code>docs/architecture.json</code>
+      coven-mcp v0.1.0 · MIT · refreshed 2026-08-07 · machine-readable companion: <a href="architecture.json">architecture.json</a>
     </footer>
   </main>
 </div>

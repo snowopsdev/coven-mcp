@@ -131,6 +131,58 @@ describe("createSanitizer", () => {
     expect(s.push("x\u009d0;title\u0007y\n")).toBe("xy\n");
   });
 
+  test.each([
+    ["OSC", "\u009d"],
+    ["DCS", "\u0090"],
+    ["SOS", "\u0098"],
+    ["PM", "\u009e"],
+    ["APC", "\u009f"],
+  ])("C1 ST terminates an 8-bit %s string", (_name, introducer) => {
+    const s = createSanitizer();
+    expect(s.push(`before${introducer}hidden\u009cafter\n`)).toBe("beforeafter\n");
+    expect(s.pendingRaw()).toBe("");
+  });
+
+  test.each([
+    ["OSC", `${ESC}]`],
+    ["DCS", `${ESC}P`],
+    ["SOS", `${ESC}X`],
+    ["PM", `${ESC}^`],
+    ["APC", `${ESC}_`],
+  ])("C1 ST terminates a 7-bit %s string", (_name, introducer) => {
+    const s = createSanitizer();
+    expect(s.push(`before${introducer}hidden\u009cafter\n`)).toBe("beforeafter\n");
+    expect(s.pendingRaw()).toBe("");
+  });
+
+  test.each([
+    ["OSC", "\u009d"],
+    ["DCS", "\u0090"],
+    ["SOS", "\u0098"],
+    ["PM", "\u009e"],
+    ["APC", "\u009f"],
+  ])("C1 ST terminates an 8-bit %s string after ESC", (_name, introducer) => {
+    const s = createSanitizer();
+    expect(s.push(`before${introducer}hidden${ESC}\u009cafter\n`)).toBe("beforeafter\n");
+    expect(s.pendingRaw()).toBe("");
+  });
+
+  test("C1 ST remains lossless across every pending-state split", () => {
+    const full = `A\u009dtitle\u009cB\u0090payload${ESC}\u009cC\n`;
+    const reference = createSanitizer();
+    const referenceOut = reference.push(full);
+
+    expect(referenceOut).toBe("ABC\n");
+    for (let split = 1; split < full.length; split++) {
+      const a = createSanitizer();
+      const outA = a.push(full.slice(0, split));
+      const b = createSanitizer(a.pendingRaw());
+      const outB = b.push(full.slice(split));
+      expect(outA + outB).toBe(referenceOut);
+      expect(b.pendingRaw()).toBe(reference.pendingRaw());
+    }
+  });
+
   test("an ESC inside an unfinished CSI restarts the sequence instead of leaking its body", () => {
     const s = createSanitizer();
     expect(s.push(`${ESC}[31${ESC}[32mGreen\n`)).toBe("Green\n");

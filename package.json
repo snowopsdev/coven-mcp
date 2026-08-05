@@ -12,6 +12,9 @@
   },
   "files": [
     "dist",
+    "docs/architecture.html",
+    "docs/architecture.json",
+    "docs/architecture-preview.png",
     "README.md",
     "LICENSE"
   ],

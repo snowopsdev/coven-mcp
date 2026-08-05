@@ -301,6 +301,48 @@ describe("readOutput", () => {
     expect(result.lastSeq).toBe(1);
   });
 
+  test("a large C1-ST-terminated OSC event is consumed instead of trapping retries", async () => {
+    const deps = scriptedDeps(
+      new Map<number | null, unknown>([
+        [null, page([out(1, `A\u009d${"x".repeat(33_000)}\u009cB\n`), exit(2)], false)],
+      ]),
+    );
+    const result = await readOutput(deps, params());
+    expect(result).toMatchObject({
+      text: "AB\n",
+      lastSeq: 2,
+      resumeToken: null,
+      complete: true,
+      truncated: false,
+      stopReason: "complete",
+    });
+  });
+
+  test("a resume token carries an unfinished C1 OSC until a later C1 ST", async () => {
+    const codec = createTokenCodec();
+    const callA = scriptedDeps(
+      new Map<number | null, unknown>([[null, page([out(1, "before\u009dhidden")], false)]]),
+    );
+    callA.codec = codec;
+    const a = await readOutput(callA, params({ timeoutMs: 0 }));
+    expect(a).toMatchObject({
+      text: "",
+      lastSeq: 1,
+      complete: false,
+      truncated: false,
+      stopReason: "timeout",
+    });
+    expect(a.resumeToken).not.toBeNull();
+
+    const callB = scriptedDeps(
+      new Map<number | null, unknown>([[1, page([out(2, "\u009cafter\n"), exit(3)], false)]]),
+    );
+    callB.codec = codec;
+    const b = await readOutput(callB, params({ resumeToken: a.resumeToken! }));
+    expect(b).toMatchObject({ text: "beforeafter\n", lastSeq: 3, complete: true });
+    expect(callB.fetches).toEqual([1]);
+  });
+
   test("an event emitting more than the 1 MiB fresh budget in one line is state-too-large", async () => {
     const oneLine = `${"w".repeat(MAX_TEXT_BYTES + 10)}\n`;
     const deps = scriptedDeps(

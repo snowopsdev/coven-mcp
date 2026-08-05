@@ -9,14 +9,29 @@ const packOutput = JSON.parse(
 );
 const files = packOutput[0].files.map((f) => f.path);
 
-const allowed = [/^dist\//, /^README\.md$/, /^LICENSE$/, /^package\.json$/];
+const allowed = [
+  /^dist\//,
+  /^docs\/architecture\.(?:html|json)$/,
+  /^docs\/architecture-preview\.png$/,
+  /^README\.md$/,
+  /^LICENSE$/,
+  /^package\.json$/,
+];
 const unexpected = files.filter((p) => !allowed.some((re) => re.test(p)));
 if (unexpected.length > 0) {
   console.error("PACKAGE FAIL: unexpected files in tarball:", unexpected.join(", "));
   process.exit(1);
 }
 
-const required = ["dist/index.js", "README.md", "LICENSE", "package.json"];
+const required = [
+  "dist/index.js",
+  "docs/architecture.html",
+  "docs/architecture.json",
+  "docs/architecture-preview.png",
+  "README.md",
+  "LICENSE",
+  "package.json",
+];
 const missing = required.filter((r) => !files.includes(r));
 if (missing.length > 0) {
   console.error("PACKAGE FAIL: missing required files:", missing.join(", "));

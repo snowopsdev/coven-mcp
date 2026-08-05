@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| Status | Design reviewed — implementation not started; daemon handshake verified Aug 3, 2026 |
+| Status | Implemented and verified; final freeze and submission pending Aug 7, 2026 |
 | Owner | snow (solo) |
 | Derived from | `PLAN.md` |
 | Coven baseline | `1fe9a744356ea3af6b47a3d497a483513b36eb15` (`coven 0.0.34` locally) |
@@ -333,26 +333,26 @@ The daemon documents ~35 stable error codes; the named rows above are the only o
 
 ### Checkpoint A (~6h in, hard abort gate)
 
-- [ ] MCP client lists the three Checkpoint A tools with the daemon stopped; the completed v1 applies this behavior to all nine tools
-- [ ] `coven_health` returns live `apiVersion`
-- [ ] `coven_list_sessions` returns real sessions
+- [x] MCP client lists the three Checkpoint A tools with the daemon stopped; the completed v1 applies this behavior to all nine tools
+- [x] `coven_health` returns live `apiVersion`
+- [x] `coven_list_sessions` returns real sessions
 
 Not met ⇒ **descope immediately** to the Familiar Contract validator per `PLAN.md` §4.
 
 ### v1 complete
 
-- [ ] All nine tools callable and correct against a live daemon
-- [ ] Round trip: `start_session` → `send_input` → `read_output` → `kill_session`
-- [ ] `read_output` returns human-readable, ANSI-free, bounded text and its opaque token resumes exactly after timeout/truncation, including split ANSI/CR state
-- [ ] Write tools denied with empty allowlist; permitted only for canonical roots inside the allowlist
-- [ ] `send_input` and `kill_session` deny sessions owned by a root outside the allowlist
-- [ ] All required error mappings in FR-31 verified as structured `isError: true` tool results
-- [ ] Fake-daemon contract tests cover connection failure, version/capability mismatch, request/response limits, array/envelope session pagination, malformed payloads, cursor regression, cross-call resume tokens with split ANSI/CR state, oversized single events, symlink/prefix escapes, cross-root session writes, and stdout purity
-- [ ] Error-mapping tests cover `INVALID_INPUT` for each validated field class, `UPSTREAM_ERROR` fall-through for an unmapped daemon code, and startup exit on a misconfigured allowlist entry
-- [ ] README troubleshooting documents the post-restart `afterSeq`/`lastSeq` resume-token recovery path
-- [ ] `npm run verify` runs typecheck, lint, tests, build, package smoke test, and README/HACKATHON checks from a clean clone with no credentials
-- [ ] 15 README sections present and non-empty
-- [ ] Demo ≤5 min showing problem, startup, workflow, integration point, results, one limitation
+- [x] All nine tools callable and correct against a live daemon
+- [x] Round trip: `start_session` → `send_input` → `read_output` → `kill_session`
+- [x] `read_output` returns human-readable, ANSI-free, bounded text and its opaque token resumes exactly after timeout/truncation, including split ANSI/CR state
+- [x] Write tools denied with empty allowlist; permitted only for canonical roots inside the allowlist
+- [x] `send_input` and `kill_session` deny sessions owned by a root outside the allowlist
+- [x] All required error mappings in FR-31 verified as structured `isError: true` tool results
+- [x] Fake-daemon contract tests cover connection failure, version/capability mismatch, request/response limits, array/envelope session pagination, malformed payloads, cursor regression, cross-call resume tokens with split ANSI/CR state, oversized single events, symlink/prefix escapes, cross-root session writes, and stdout purity
+- [x] Error-mapping tests cover `INVALID_INPUT` for each validated field class, `UPSTREAM_ERROR` fall-through for an unmapped daemon code, and startup exit on a misconfigured allowlist entry
+- [x] README troubleshooting documents the post-restart `afterSeq`/`lastSeq` resume-token recovery path
+- [x] `npm run verify` runs typecheck, lint, tests, build, package smoke test, and README/HACKATHON checks from a clean clone with no credentials
+- [x] 14 guide-required README sections present and non-empty
+- [x] Demo ≤5 min showing problem, startup, workflow, integration point, results, one limitation
 - [ ] Tag `august-hackathon-2026-final` pushed; SHA in `HACKATHON.md`
 
 ## 9. Demo script (≤5 min)

@@ -31,6 +31,7 @@ type ScanOutcome = { out: string; pending: string };
 
 const ESC = "\u001b";
 const BEL = "\u0007";
+const ST = "\u009c";
 
 function scan(raw: string, flushEnd: boolean): ScanOutcome {
   type State = "ground" | "escape" | "charset" | "csi" | "osc" | "oscEsc" | "str" | "strEsc";
@@ -97,17 +98,18 @@ function scan(raw: string, flushEnd: boolean): ScanOutcome {
         }
         break; // parameter and intermediate bytes are consumed silently
       case "osc":
-        if (ch === BEL) state = "ground";
+        if (ch === BEL || ch === ST) state = "ground";
         else if (ch === ESC) state = "oscEsc";
         break;
       case "oscEsc":
-        state = ch === "\\" ? "ground" : "osc";
+        state = ch === "\\" || ch === ST ? "ground" : "osc";
         break;
-      case "str": // DCS/SOS/PM/APC strings terminate only on ST (ESC \)
-        if (ch === ESC) state = "strEsc";
+      case "str": // DCS/SOS/PM/APC strings terminate on 7-bit or 8-bit ST
+        if (ch === ST) state = "ground";
+        else if (ch === ESC) state = "strEsc";
         break;
       case "strEsc":
-        state = ch === "\\" ? "ground" : "str";
+        state = ch === "\\" || ch === ST ? "ground" : "str";
         break;
     }
   }

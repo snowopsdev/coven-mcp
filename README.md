@@ -2,6 +2,10 @@
 
 An MCP server that bridges the Coven daemon to any stdio-capable MCP client.
 
+[![coven-mcp architecture reference](docs/architecture-preview.png)](docs/architecture.html)
+
+**[Explore the complete architecture reference →](docs/architecture.html)**
+
 ## What it does
 
 `coven-mcp` is a standalone stdio MCP server that exposes the Coven daemon's session lifecycle, event output, harness capability manifests, and memory listing as nine MCP tools. Point any stdio-capable MCP client at it and Coven becomes first-class in that client — with no changes to Coven itself.
@@ -266,10 +270,10 @@ npm run verify
 | --- | --- |
 | `typecheck` | Strict TypeScript, no emit errors |
 | `lint` | Biome lint and format across `src`, `test`, `scripts` |
-| `test` | 137 unit and contract tests |
+| `test` | 155 unit and contract tests |
 | `build` | Production build produces a runnable entry point |
 | stdio smoke | Raw JSON-RPC `initialize` → `tools/list` → `coven_health` against the built binary; asserts stdout carries only JSON-RPC, that discovery is stable with the daemon down, and that a misconfigured allowlist exits non-zero |
-| package check | Tarball contains only `dist/`, README, LICENSE, `package.json`; shebang, `bin`, and `engines` wired |
+| package check | Tarball contains only `dist/`, the architecture reference, README, LICENSE, and `package.json`; shebang, `bin`, and `engines` wired |
 | docs check | Every required README section present and non-empty; HACKATHON.md carries the pinned SHA and tag |
 
 Contract tests run against a **real HTTP server bound to a temporary Unix socket** — `node:http` internals are never mocked. They cover the acceptance matrix: array/envelope pagination, malformed payloads, cursor regression, split ANSI/CR state across resume tokens, oversized events, size limits, symlink and prefix escapes, cross-root session writes, structured error mappings, and stdout purity.

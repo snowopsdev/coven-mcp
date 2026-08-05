@@ -27,7 +27,7 @@ npm ci
 npm run verify
 ```
 
-That runs typecheck, lint, 137 unit and contract tests, a production build, a raw JSON-RPC stdio smoke test, a package-content check, and a documentation check — roughly four seconds end to end. Contract tests exercise the real protocol against a fake daemon bound to a temporary Unix socket, so the same code paths a live daemon would hit are covered.
+That runs typecheck, lint, 155 unit and contract tests, a production build, a raw JSON-RPC stdio smoke test, a package-content check, and a documentation check — roughly four seconds end to end. Contract tests exercise the real protocol against a fake daemon bound to a temporary Unix socket, so the same code paths a live daemon would hit are covered.
 
 With a Coven daemon available, `README.md` § *Run* has a copy-pasteable JSON-RPC pipeline that talks to the real daemon without any MCP client, and § *Demo* has the full six-step live workflow.
 
@@ -97,7 +97,7 @@ npm run verify
 | --- | --- |
 | typecheck | Strict TypeScript, no emit errors |
 | lint | Biome lint and format across `src`, `test`, `scripts` |
-| test | 137 unit and contract tests |
+| test | 155 unit and contract tests |
 | build | Production build produces a runnable entry point |
 | stdio smoke | Raw JSON-RPC against the built binary; stdout purity, stable discovery with the daemon down, non-zero exit on a misconfigured allowlist |
 | package check | Tarball contents, shebang, `bin`, and `engines` |

@@ -108,7 +108,7 @@
     },
     {
       "file": "src/sanitizer.ts",
-      "loc": 141,
+      "loc": 143,
       "layer": "output-pipeline",
       "role": "Streaming terminal state machine. Strips ANSI/C0/C1 sequences, applies carriage-return overwrite, and exports compacted parser state so resumes are lossless.",
       "dependsOn": []
@@ -251,10 +251,10 @@
     "requiresCredentials": false,
     "requiresDaemon": false,
     "requiresNetwork": false,
-    "totalTests": 137,
+    "totalTests": 155,
     "testFiles": [
-      { "file": "src/sanitizer.test.ts", "tests": 23 },
-      { "file": "src/read-output.test.ts", "tests": 19 },
+      { "file": "src/sanitizer.test.ts", "tests": 39 },
+      { "file": "src/read-output.test.ts", "tests": 21 },
       { "file": "src/server-lifecycle.test.ts", "tests": 14 },
       { "file": "src/normalize.test.ts", "tests": 13 },
       { "file": "src/daemon-client.test.ts", "tests": 12 },
@@ -269,7 +269,7 @@
     "stages": [
       { "stage": "typecheck", "proves": "Strict TypeScript, no emit errors." },
       { "stage": "lint", "proves": "Biome lint and format across src, test, and scripts." },
-      { "stage": "test", "proves": "137 unit and contract tests against a real HTTP server on a temporary Unix socket." },
+      { "stage": "test", "proves": "155 unit and contract tests against a real HTTP server on a temporary Unix socket." },
       { "stage": "build", "proves": "Production build yields a runnable entry point." },
       { "stage": "stdio smoke", "proves": "Stdout purity, stable discovery with the daemon down, non-zero exit on misconfiguration." },
       { "stage": "package check", "proves": "Tarball contents, shebang, bin, and engines." },
@@ -306,11 +306,11 @@
 
   "metrics": {
     "sourceModules": 11,
-    "sourceLoc": 1844,
+    "sourceLoc": 1846,
     "testFiles": 12,
-    "tests": 137,
+    "tests": 155,
     "tools": 9,
     "errorCodes": 11,
-    "commits": 24
+    "commits": 29
   }
 }

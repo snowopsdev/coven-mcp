@@ -4,8 +4,8 @@
 
 - `PLAN.md` defines scope, sequencing, budget, security decisions, and release gates.
 - `PRD.md` is the implementation contract: tool schemas, API behavior, limits, errors, and acceptance criteria.
-- The repository is design-only; no source, tests, or assets exist.
-- Add TypeScript runtime code under `src/` and colocate small unit tests as `*.test.ts`. Put fake-daemon contract fixtures and end-to-end MCP tests under `test/`.
+- TypeScript runtime code lives under `src/`, with unit and contract tests colocated as `*.test.ts`. Fake-daemon helpers live under `test/`.
+- Release, demo, package, and documentation checks live under `scripts/`. The committed architecture reference is under `docs/`.
 - Keep generated output in `dist/`; never commit it unless release rules explicitly require it.
 
 ## Package Manager & Commands
@@ -19,9 +19,9 @@
 | Focused test | `npm test -- path/to/file.test.ts` |
 | Full verification | `npm run verify` |
 | Package smoke test | `npm pack --dry-run` |
-| Documentation lint | `npx markdownlint-cli --disable MD013 -- PLAN.md PRD.md AGENTS.md` |
+| Documentation contract | `node scripts/check-docs.mjs` |
 
-- Build/test scripts do not exist yet. Add them with the first implementation and keep `npm run verify` aligned with PRD §7–8.
+- Keep `npm run verify` aligned with PRD §7–8. It is the authoritative local gate and includes typecheck, lint, tests, build, stdio smoke, package validation, and documentation validation.
 
 ## Coding Style & Naming Conventions
 
@@ -42,6 +42,6 @@
 
 ## Commits & Pull Requests
 
-- This directory has no Git history yet. Use imperative subjects, DCO sign-off (`git commit -s`), and one logical change per commit.
+- Use imperative subjects, DCO sign-off (`git commit -s`), and one logical change per commit.
 - AI-authored commits include `Co-Authored-By: <agent name> <agent email>`.
 - PRs include scope, linked issue, validation commands/results, security impact, and documentation changes. Add screenshots or demo evidence only for user-visible behavior.

@@ -277,7 +277,7 @@ try {
   console.log(
     `\n${green("Demo complete.")} Nothing was installed, no credentials were used, no network.`,
   );
-  console.log(dim("Run `npm run verify` for the full 137-test verification.\n"));
+  console.log(dim("Run `npm run verify` for the full verification suite.\n"));
   finish(0);
 } catch (err) {
   console.error("\nDemo failed:", err);
