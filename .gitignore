@@ -5,3 +5,9 @@ dist/
 .env.*
 .DS_Store
 .omc/
+
+# graphify machine-local state (absolute paths; would trip the freeze
+# preflight's machine-local-path check and are meaningless off this machine)
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cache/stat-index.json

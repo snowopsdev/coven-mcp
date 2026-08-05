@@ -1,0 +1,564 @@
+{
+  "nodes": [
+    {
+      "id": "readme_coven_mcp",
+      "label": "coven-mcp",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Bridges the Coven daemon to stdio MCP clients because Coven state is otherwise invisible from Claude Desktop/Cursor, forcing context-switching that defeats the point of an agent runtime; additive to coven-reach and coven-codeflow rather than competing."
+    },
+    {
+      "id": "readme_coven_daemon",
+      "label": "Coven Daemon",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "How OpenCoven was used",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_reach",
+      "label": "coven-reach",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Why OpenCoven",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_codeflow",
+      "label": "coven-codeflow",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Why OpenCoven",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_health",
+      "label": "coven_health",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Never fails: an unreachable daemon is reported as data, not a tool error, so it stays useful as a diagnostic when everything else is failing."
+    },
+    {
+      "id": "readme_coven_list_harnesses",
+      "label": "coven_list_harnesses",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_list_sessions",
+      "label": "coven_list_sessions",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_get_session",
+      "label": "coven_get_session",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_read_output",
+      "label": "coven_read_output",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_list_memory",
+      "label": "coven_list_memory",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A file lister, not search or content read, because the daemon route accepts no filters; advertising unsupported filters would be dishonest scope."
+    },
+    {
+      "id": "readme_coven_start_session",
+      "label": "coven_start_session",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_send_input",
+      "label": "coven_send_input",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Forwards data to the PTY verbatim with no appended newline, so callers must include a trailing newline to submit a line — rewriting input would make the bridge lossy."
+    },
+    {
+      "id": "readme_coven_kill_session",
+      "label": "coven_kill_session",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_coven_mcp_allowed_roots",
+      "label": "COVEN_MCP_ALLOWED_ROOTS",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Configuration",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Colon-separated absolute roots gating all write tools; unset means read-only; any invalid entry aborts startup naming its position (never its value) so a misconfigured allowlist is never partially honored; containment is path-component based after symlink resolution so /work/app2 is never inside /work/app."
+    },
+    {
+      "id": "readme_resume_token",
+      "label": "Resume Token",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Security and privacy",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "HMAC-signed with a random per-process secret, session-bound and size-capped; integrity-protected but not encrypted since the payload includes un-emitted output state, so tokens must be treated as session output and never logged."
+    },
+    {
+      "id": "readme_ansi_cr_sanitizer",
+      "label": "ANSI/CR Sanitizer",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Architecture",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Raw PTY output (ANSI escapes, carriage-return progress bars, lines split across events) is reassembled into plain text because the consumer is an LLM, not a terminal emulator."
+    },
+    {
+      "id": "readme_capability_handshake",
+      "label": "Capability Handshake",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "How OpenCoven was used",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every non-health call requires ok===true, apiVersion coven.daemon.v1, and the needed capability advertised as exactly true; string capabilities are diagnostic only, and the legacy /api/v1/api-version route is deliberately unused because upstream documents it as not proof of support."
+    },
+    {
+      "id": "readme_error_codes",
+      "label": "Error Codes",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Error codes",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_trust_model",
+      "label": "Trust Model",
+      "file_type": "rationale",
+      "source_file": "README.md",
+      "source_location": "Security and privacy",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Daemon trust is same-user socket access with no authentication, so coven-mcp inherits full same-user authority and its job is to narrow it before an LLM touches it; the allowlist is authorization not a sandbox; tool results are untrusted content with respect to prompt injection (encoding sanitized, meaning not); anyone with same-user access can bypass coven-mcp entirely."
+    },
+    {
+      "id": "readme_verify_pipeline",
+      "label": "Verify Pipeline",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Test or verify",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "npm run verify needs no credentials, daemon, or network so a judge can prove the package from a clean clone in seconds; contract tests bind a real HTTP server to a temporary Unix socket rather than mocking node:http internals."
+    },
+    {
+      "id": "readme_demo",
+      "label": "Demo",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "Demo",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "npm run demo drives the real built server over real MCP stdio against a scripted stand-in daemon: deterministic, no credentials or provider spend, so the demo artifact works for judges without a Coven install."
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_coven_mcp",
+      "target": "readme_coven_daemon",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "What it does",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_mcp",
+      "target": "readme_coven_reach",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Why OpenCoven",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_mcp",
+      "target": "readme_coven_codeflow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Why OpenCoven",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_mcp",
+      "target": "readme_error_codes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Error codes",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_mcp",
+      "target": "readme_verify_pipeline",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Test or verify",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_mcp",
+      "target": "readme_demo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Demo",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_read_output",
+      "target": "readme_resume_token",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_read_output",
+      "target": "readme_ansi_cr_sanitizer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Tool reference",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_start_session",
+      "target": "readme_coven_mcp_allowed_roots",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Security and privacy",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_send_input",
+      "target": "readme_coven_mcp_allowed_roots",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Security and privacy",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_kill_session",
+      "target": "readme_coven_mcp_allowed_roots",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Security and privacy",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_trust_model",
+      "target": "readme_coven_mcp_allowed_roots",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Security and privacy",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_capability_handshake",
+      "target": "readme_coven_daemon",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "How OpenCoven was used",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_health",
+      "target": "readme_coven_daemon",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Run",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_demo",
+      "target": "readme_ansi_cr_sanitizer",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "Demo",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_resume_token",
+      "target": "docs_architecture_resume_token",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_ansi_cr_sanitizer",
+      "target": "docs_architecture_sanitizer",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_capability_handshake",
+      "target": "docs_architecture_health_gate",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_coven_mcp_allowed_roots",
+      "target": "docs_architecture_allowlist",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_health",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L104",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_list_harnesses",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L128",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_list_sessions",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L152",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_get_session",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L215",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_start_session",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L239",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_send_input",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L301",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_list_memory",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L333",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_read_output",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L368",
+      "weight": 1.0
+    },
+    {
+      "source": "src_server_createcovenmcpserver",
+      "target": "readme_coven_kill_session",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "src/server.ts:L476",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "readme_v1_tool_surface_group",
+      "label": "coven-mcp v1 Tool Surface",
+      "nodes": [
+        "readme_coven_health",
+        "readme_coven_list_harnesses",
+        "readme_coven_list_sessions",
+        "readme_coven_get_session",
+        "readme_coven_read_output",
+        "readme_coven_list_memory",
+        "readme_coven_start_session",
+        "readme_coven_send_input",
+        "readme_coven_kill_session"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md"
+    },
+    {
+      "id": "readme_write_authorization_flow",
+      "label": "Allowlist Write Authorization Flow",
+      "nodes": [
+        "readme_coven_mcp_allowed_roots",
+        "readme_coven_start_session",
+        "readme_coven_send_input",
+        "readme_coven_kill_session",
+        "readme_trust_model"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md"
+    }
+  ]
+}
