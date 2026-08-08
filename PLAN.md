@@ -14,7 +14,7 @@
 
 **One-liner:** Expose Coven harnesses, sessions, output, and memory listings as MCP tools, so Claude Desktop, Cursor, or another stdio-capable MCP client can drive Coven without a bespoke integration.
 
-**Why it scores if the inaccessible brief is unchanged:**
+**Why it scores under the verified brief:**
 
 - OpenCoven already has MCP implementations: `coven-reach` is a standalone stdio MCP server for filesystem/web operations, and `coven-codeflow` consumes MCP servers. The defensible novelty claim is narrower: no reviewed first-party server exposes the **Coven daemon's session lifecycle, event output, harness capabilities, and memory listing** as MCP tools.
 - Aligned with stated direction (`coven-familiar-spec` lists an MCP server registry as intent) but not duplicating in-flight work (`coven-harness-capabilities` lists cross-harness MCP exposure as a current non-goal).
@@ -26,7 +26,7 @@
 - Live handshake verified against local `coven 0.0.34`: `GET /api/v1/health` returned `ok: true`, `apiVersion: "coven.daemon.v1"`, and `sessions`/`events` capabilities enabled.
 - API assumptions below were rechecked against `OpenCoven/coven` commit `1fe9a744356ea3af6b47a3d497a483513b36eb15`. Pin this SHA until the implementation passes against a newer reviewed commit.
 - The narrower novelty comparison covered the public OpenCoven repositories visible on Aug 3 and pins `coven-reach` at `07f5c9d5e4863c1a9a187a070e413d51110ad610` and `coven-codeflow` at `5fd9df1e5133c72a1373ff01f7b6416dfe30534b`. The familiar and harness-capability specs are within the pinned `coven` commit.
-- **The official brief is now verified** (Aug 4, 2026, via <https://hackathon.opencoven.ai/>). Deadline, freeze tag, and submission URL all match the earlier provisional values; the README section list did not, and has been replaced — see §6. The event *repository* is `OpenCoven/opencoven-beta-august-hackathon-2026` (private, not reachable with the entrant's token), so the `participant/` templates for LICENSE and HACKATHON.md still need reconciling before freeze — The tag-name discrepancy recorded earlier is resolved: the published docs were corrected upstream on Aug 5 and now print the August tag, matching what we shipped.
+- **The official brief and event repository are verified.** Deadline, freeze tag, submission URL, participant templates, and issue form were rechecked Aug 7. `LICENSE` matches the official template with only the permitted holder substitution, and `HACKATHON.md` now follows the official declaration template. The tag-name discrepancy recorded earlier was resolved upstream on Aug 5; every source prints the August tag.
 - Refresh this baseline after each build block; it is a dated starting state, not a live status dashboard.
 
 ---
@@ -107,7 +107,7 @@ Total ≈ 24.5h. Checkpoints are **abort gates**, not suggestions.
 
 Blocks 0–9 are complete. **Checkpoint A passed** at Block 2 — the descope ladder below was never needed and is retained only as a record of the decision.
 
-Block 10 remains. Before freezing: reconcile the participant templates, make the repository public, fill the final commit SHA, run `node scripts/freeze-preflight.mjs`, create and push the final tag, and file the submission issue. The repository remote and official brief are already verified; an optional video is not required because `npm run demo` is the accepted artifact.
+Block 10 remains. The participant templates are reconciled and the repository is public. Run `node scripts/freeze-preflight.mjs`, create and push the final tag, capture its full commit SHA, and file the submission issue. An optional video is not required because `npm run demo` is the accepted artifact.
 
 ### CHECKPOINT A — end of Block 2 (~6h in)
 
@@ -167,7 +167,7 @@ The [official submission guide](https://hackathon.opencoven.ai/docs/submission-g
 
 The guide presents these as a minimum, so extra sections are allowed; `coven-mcp` adds **Tool reference** and **Troubleshooting**. The checker verifies presence, non-emptiness, and the relative order of the required set, ignoring extras.
 
-The guide also requires copying `participant/LICENSE_TEMPLATE.txt` to `LICENSE` and `participant/HACKATHON_TEMPLATE.md` to `HACKATHON.md`, completing every field. Both templates live in the event repository `OpenCoven/opencoven-beta-august-hackathon-2026`, which is **private**; it is not reachable with the entrant's current `gh` token, so the templates could not be retrieved during this review. Our `LICENSE` is standard MIT with only year and holder populated, which satisfies the rules text verbatim; our `HACKATHON.md` is hand-written and covers the fields the guide names. **Both must be diffed against the real templates before freeze** — see §8.
+The guide also requires copying `participant/LICENSE_TEMPLATE.txt` to `LICENSE` and `participant/HACKATHON_TEMPLATE.md` to `HACKATHON.md`, completing every field. Both were retrieved from `OpenCoven/opencoven-beta-august-hackathon-2026` and reconciled on Aug 7. `LICENSE` matches the official text with only the permitted holder substitution; `HACKATHON.md` follows the official section and field structure with repository-backed evidence.
 
 Required repository files, per the guide: `README.md`, `LICENSE`, `HACKATHON.md`, source, dependency manifests and lockfiles, and tests or verification instructions.
 
@@ -194,7 +194,7 @@ Bonus points require the PR to be **merged before scores lock** — outside your
 | Deadline | Midnight **beginning** Sat Aug 8, `America/New_York`; must be submitted before the clock passes `12:00:00 AM EDT` |
 | Freeze tag | `august-hackathon-2026-final` (re-confirmed Aug 5 in both documents) |
 | Tag command | `git tag -a august-hackathon-2026-final -m "OpenCoven Beta Hackathon final submission"` — the rules give this exact command |
-| Submission form | <https://github.com/OpenCoven/opencoven-beta-august-hackathon-2026/issues/new/choose> (private; now also the URL printed in the guide) |
+| Submission form | <https://github.com/OpenCoven/opencoven-beta-august-hackathon-2026/issues/new/choose> |
 | Scoring | 100 core, **60 minimum** for prize eligibility, up to 25 bonus (bonus cannot make an entry eligible) |
 | Demo | Five minutes or less; public video, live demo, terminal recording, or local command; must not require judges to purchase anything |
 | License | Standard MIT, only year and holder populated; no added restrictions, field-of-use limits, noncommercial clauses, Commons Clause, or modified permission/warranty text |
@@ -214,9 +214,9 @@ git rev-list -n 1 august-hackathon-2026-final
 
 Then, before filing the issue:
 
-- [ ] **Obtain access to `OpenCoven/opencoven-beta-august-hackathon-2026`** (private — request via the event Discord), then diff `LICENSE` against `participant/LICENSE_TEMPLATE.txt` and `HACKATHON.md` against `participant/HACKATHON_TEMPLATE.md`. Ours are hand-written but rules-compliant in content.
+- [x] Retrieve the participant templates, confirm `LICENSE`, and reconcile `HACKATHON.md` to the official structure.
 - [ ] Re-read the issue form and confirm the **tag string** it asks for still reads `august-hackathon-2026-final`
-- [ ] Make the repository **public** — judges must be able to clone it (preflight fails while private)
+- [x] Make the repository **public** — judges must be able to clone it.
 - [ ] Clone fresh from a clean location; verify tag checks out
 - [ ] Run every README command from that clean clone
 - [ ] Grep for secret patterns (keys, tokens, `.env`) — preflight covers this
@@ -254,7 +254,7 @@ Required: project name, one-sentence summary, team members, repo URL, tag name, 
 | --- | --- |
 | Upstream moves under you (`covenVersion` 0.0.0, ~10 commits/day) | Pin a commit SHA in README; test against it |
 | Novelty claim overstates the ecosystem | Claim the daemon-lifecycle bridge specifically; acknowledge `coven-reach` and `coven-codeflow` |
-| Hackathon brief/submission URL is inaccessible or changed | **Resolved Aug 4** — brief verified; deadline, tag, and URL confirmed. Residual: `participant/` templates still unobtained (§8) |
+| Hackathon brief/submission URL is inaccessible or changed | **Resolved Aug 7** — brief, event repository, templates, issue form, deadline, tag, and URL verified |
 | Daemon not running / harness not authed | `coven doctor` first; document prerequisites |
 | PTY output unparseable in practice | Descope ladder step 2 — return raw events |
 | Unbounded event accumulation exhausts memory or exceeds an MCP client limit | Enforce `maxBytes`, return `truncated: true` plus a resume token |

@@ -1,143 +1,130 @@
-# Hackathon Submission — `coven-mcp`
+# Hackathon Declaration
 
-**Event:** OpenCoven Beta Hackathon 2026 (build window Aug 2 23:30 EDT – Aug 8 00:00 EDT)
+## Event
 
-> Two placeholders below are filled at freeze time (see `PLAN.md` §8). The freeze preflight runs `COVEN_MCP_RELEASE_CHECK=true npm run verify`, which fails while either remains, so this file cannot be left half-complete.
+OpenCoven Beta Hackathon 2026 — The Beta Summoning
 
-| | |
-| --- | --- |
-| Project | `coven-mcp` — MCP server bridging the Coven daemon to stdio MCP clients |
-| One-sentence summary | Exposes Coven sessions, output, harness capabilities, and memory listing as MCP tools so any stdio-capable MCP client can see and drive Coven without leaving the client |
-| Team | snow (solo) |
-| Repo URL | <https://github.com/snowopsdev/coven-mcp> (**must be public before submitting**) |
-| Freeze tag | `august-hackathon-2026-final` |
-| Final commit SHA | TODO at freeze |
-| Demo | `npm run demo` — a deterministic local command, which the submission guide accepts as a demo artifact. Requires no Coven install, credentials, network, or provider spend. See README § Demo. |
-| License | MIT, unmodified — greenfield, no prior work reused |
+## Project
 
-**Naming note for reviewers:** the tag matches the event repository, `opencoven-beta-august-hackathon-2026`, and both the submission guide and the official rules confirm it as of Aug 5.
+- Project name: `coven-mcp`
+- Repository: <https://github.com/snowopsdev/coven-mcp>
+- Final tag: `august-hackathon-2026-final`
+- Final commit SHA: the commit resolved by the immutable final tag; its full 40-character value is recorded in the submission issue
+- Demo: `npm run demo` — deterministic local demo requiring no Coven install, credentials, network, or provider spend
+- Submission timestamp: the authoritative GitHub submission-issue creation timestamp, filed before August 8, 2026 at 12:00 AM EDT
 
-## How to evaluate this in five minutes
+## Team
 
-No Coven install, credentials, network access, or running daemon required:
+Employer name (optional):
 
-```sh
-git clone https://github.com/snowopsdev/coven-mcp.git && cd coven-mcp
-npm ci
-npm run verify
-```
+| Name | GitHub | Discord | Role |
+|---|---|---|---|
+| AJ | [@snowopsdev](https://github.com/snowopsdev) | `@snowopsdev` | Solo entrant; design, implementation, testing, and documentation |
 
-That runs typecheck, lint, 155 unit and contract tests, a production build, a raw JSON-RPC stdio smoke test, a package-content check, and a documentation check — roughly four seconds end to end. Contract tests exercise the real protocol against a fake daemon bound to a temporary Unix socket, so the same code paths a live daemon would hit are covered.
+## Summary
 
-With a Coven daemon available, `README.md` § *Run* has a copy-pasteable JSON-RPC pipeline that talks to the real daemon without any MCP client, and § *Demo* has the full six-step live workflow.
+Developers using an MCP client cannot otherwise see or drive Coven's local daemon sessions without switching to a terminal. `coven-mcp` exposes the daemon's session lifecycle, readable event output, harness capabilities, and memory listing as nine stdio MCP tools. It denies writes by default, authorizes mutations against canonical project roots, and converts raw PTY output into bounded, resumable text.
 
-## What it does
+## Greenfield declaration
 
-`coven-mcp` is a standalone stdio MCP server exposing nine tools over the Coven daemon's `coven.daemon.v1` HTTP-over-Unix-socket API:
+- [x] Project-specific implementation began at or after August 2, 2026, 11:30 PM EDT.
+- [x] No prior prototype or substantially similar project was reused.
+- [x] Any pre-existing general-purpose dependencies, assets, templates, or data are disclosed below.
+- [x] All team members are listed.
 
-| Tool | Authority |
-| --- | --- |
-| `coven_health`, `coven_list_harnesses`, `coven_list_sessions`, `coven_get_session`, `coven_read_output`, `coven_list_memory` | read-only |
-| `coven_start_session`, `coven_send_input`, `coven_kill_session` | write, allowlist-gated |
+First project implementation commit:
 
-The two components that carry the most engineering weight:
-
-- **`coven_read_output`** turns raw PTY event data — ANSI escapes, carriage-return rewrites, lines split across events, JSON-string payloads — into plain readable text, with HMAC-signed opaque tokens that resume losslessly across calls, including mid-escape-sequence state. All reads are bounded in bytes, pages, events, and wall-clock, and every stop maps to exactly one documented tuple.
-- **The authority boundary.** The daemon has no authentication, so an unguarded bridge would hand an LLM the ability to spawn PTY processes anywhere. `coven-mcp` denies writes by default and authorizes them against the daemon's own session records rather than caller-supplied paths.
+- Commit: `dda0a5da9cc6ac063e4ac7144bb7d5a9bdbfaa69`
+- Timestamp: August 3, 2026 at 3:30:24 PM EDT
+- Description: initialized the repository scaffolding; project-specific implementation followed entirely within the build window
 
 ## OpenCoven use
 
-`coven-mcp` integrates with Coven at **runtime** over its documented socket API. No Coven code is vendored, copied, or modified.
+Mode:
 
-Pinned upstream baselines (verified Aug 3–4, 2026):
+- [ ] Development workflow
+- [x] Runtime integration
+- [ ] Both
 
-| Repository | Commit | Role |
-| --- | --- | --- |
-| `OpenCoven/coven` | `1fe9a744356ea3af6b47a3d497a483513b36eb15` (CLI `0.0.34`) | The API `coven-mcp` bridges |
-| `OpenCoven/coven-reach` | `07f5c9d5e4863c1a9a187a070e413d51110ad610` | Novelty comparison (different tool domain) |
-| `OpenCoven/coven-codeflow` | `5fd9df1e5133c72a1373ff01f7b6416dfe30534b` | Novelty comparison (MCP client, not server) |
+Describe exactly how OpenCoven was used:
 
-`coven-reach` is an MCP server for filesystem and web operations; `coven-codeflow` is an MCP *client*. Neither exposes the daemon itself, which is the gap this fills.
+`coven-mcp` integrates at runtime with the Coven daemon over its documented `coven.daemon.v1` HTTP-over-Unix-socket API. No OpenCoven code is vendored or modified. Every non-health tool performs a live health/version/capability handshake, then calls the daemon routes required for harness discovery, session lifecycle, event reads, or memory listing. The implementation was built and live-verified against `OpenCoven/coven` commit `1fe9a744356ea3af6b47a3d497a483513b36eb15` (CLI `0.0.34`).
 
-### Evidence of use, not just installation
+Evidence:
 
-Captured from a live `coven 0.0.34` daemon during development, and reproducible:
+- commands or surfaces: `npm run demo` prints the actual daemon request log for health, harness, session, input, kill, and event routes
+- session references: live session `a6f8704d-0a2f-4eee-ac76-dc929b9944dd` was started, driven, read, killed, and confirmed terminal through this server
+- sanitized screenshots or logs: `docs/architecture-preview.png` and the deterministic ANSI/CR-heavy output shown by `npm run demo`
+- architecture or integration code: `src/daemon-client.ts`, `src/health-gate.ts`, `src/normalize.ts`, `src/read-output.ts`, and `docs/architecture.html`
+- reproducibility instructions: `npm ci && npm run verify` runs 155 unit and contract tests plus typecheck, lint, build, stdio, package, and documentation gates; `npm run demo` exercises the real built MCP server against a scripted Unix-socket daemon
 
-| Evidence | Where to see it |
-| --- | --- |
-| The exact HTTP calls made against the daemon socket | `npm run demo` prints its real request log — `GET /api/v1/health`, `/capabilities/harnesses`, `/sessions`, `POST /sessions`, `/sessions/:id/input`, `/sessions/:id/kill`, `GET /sessions/:id/events` |
-| A real session driven end to end | Session `a6f8704d-0a2f-4eee-ac76-dc929b9944dd` was started, driven, and killed through this server against the live daemon; `coven_get_session` then reported status `killed` |
-| Real PTY output parsed | The same session's 27 events across kinds `output`, `input`, `kill`, and `exit` were read back as clean ANSI-free text through `coven_read_output` |
-| Code using the OpenCoven interface | `src/daemon-client.ts` (HTTP over `socketPath`), `src/health-gate.ts` (capability handshake), `src/normalize.ts` (the daemon's response shapes) |
-| Configuration | README § Configuration — the `mcpServers` block a user actually writes |
-| Architecture | README § Architecture — request path, trust boundary, and the two response paths |
+## Reused and third-party material
 
-### Upstream behaviors discovered while building
+| Item | Source | License | How used |
+|---|---|---|---|
+| `@modelcontextprotocol/sdk` 1.30.0 | <https://github.com/modelcontextprotocol/typescript-sdk> | MIT | MCP protocol types, server, and stdio transport |
+| `zod` 4.4.3 | <https://github.com/colinhacks/zod> | MIT | Runtime tool-input schemas |
+| TypeScript 7.0.2 | <https://github.com/microsoft/TypeScript> | Apache-2.0 | Development compiler and strict type checking |
+| Vitest 4.1.10 | <https://github.com/vitest-dev/vitest> | MIT | Development test runner |
+| Biome 2.5.7 | <https://github.com/biomejs/biome> | MIT OR Apache-2.0 | Development linting and formatting |
 
-Verified against the live daemon rather than assumed from docs. Each is documented in the README and encoded in contract tests:
+No third-party source code, data, screenshots, or other assets are vendored. The architecture reference and preview are original project artifacts.
 
-- The **events envelope is camelCase** (`events`, `nextCursor`, `hasMore`) while session records and event objects are snake_case — the casing convention is not uniform across the API.
-- A fifth, undocumented event kind, **`kill`**, appears alongside `output`/`input`/`status`/`exit`.
-- `GET /api/v1/sessions` returns a bare array without pagination parameters and an envelope with them; `GET /api/v1/memory` returns a bare array.
-- Health advertises **string-valued capabilities** (`eventCursor: "sequence"`), so a truthiness check would wrongly grant permission — `coven-mcp` requires exactly `true`.
-- The daemon reports **`covenVersion: "0.0.0"`** on a 0.0.34 install, so version gating must use `apiVersion` and capabilities instead.
+## AI assistance
 
-These are candidate upstream documentation contributions (four `docs/daemon/` pages are currently one-line stubs); none is claimed as a bonus unless a PR is merged before scores lock.
+Codex and Claude Fable 5 assisted with implementation, tests, review, and documentation. AI-authored commits carry `Co-Authored-By` trailers. Generated changes were reviewed through repository diffs, focused regression tests, the full `npm run verify` gate, live daemon checks where applicable, package inspection, and the scripted freeze preflight.
 
-## Validation
+## Required project paths
 
-From a clean clone, with no credentials, no daemon, and no network:
-
-```sh
-npm ci
-npm run verify
-```
-
-| Stage | What it proves |
-| --- | --- |
-| typecheck | Strict TypeScript, no emit errors |
-| lint | Biome lint and format across `src`, `test`, `scripts` |
-| test | 155 unit and contract tests |
-| build | Production build produces a runnable entry point |
-| stdio smoke | Raw JSON-RPC against the built binary; stdout purity, stable discovery with the daemon down, non-zero exit on a misconfigured allowlist |
-| package check | Tarball contents, shebang, `bin`, and `engines` |
-| docs check | Every section the submission guide requires, present, non-empty, and in the guide's order |
-
-Contract tests bind a real HTTP server to a temporary Unix socket rather than mocking `node:http`, and cover the acceptance matrix: array/envelope pagination, malformed payloads, cursor regression, split ANSI/CR state across resume tokens, size and page limits, symlink and prefix escapes, cross-root session writes, structured error mappings, and stdout purity.
-
-Verified separately against a live `coven 0.0.34` daemon: health and capability handshake, harness and session listing, the full `start → get → input → kill` round trip ending in a terminal status, out-of-root denial, ANSI-free output reads with resume, and an honest empty memory list.
-
-The `coven_read_output` stack was additionally put through an adversarial multi-agent review; nine confirmed defects were fixed, the most serious being a state-growth bug that would have made carriage-return-heavy output (any progress bar) permanently unreadable. Each fix landed with a regression test.
-
-## Security impact
-
-The daemon's trust model is same-user socket access with no authentication. `coven-mcp` deliberately narrows what a connected LLM inherits:
-
-- Write tools are **denied by default**; `COVEN_MCP_ALLOWED_ROOTS` is opt-in, and an invalid entry aborts startup rather than being silently dropped.
-- `coven_send_input` and `coven_kill_session` authorize the **daemon's own record** for the session, never a caller-supplied root.
-- Containment is path-component based after symlink resolution, so `..` traversal, symlink escapes, and sibling-prefix paths (`/work/app2` against `/work/app`) all fail closed.
-- Memory excerpts are blanked unless explicitly enabled, and privacy-flagged entries stay redacted even then.
-- Prompts, input, session output, memory excerpts, environment values, resume tokens, and raw daemon bodies are never logged. Stdout is exclusively MCP JSON-RPC.
-
-The README documents the full threat model, including the explicit limits: the allowlist is an authorization gate rather than a process sandbox, tool results are untrusted content with respect to prompt injection, and anyone with same-user access can bypass `coven-mcp` by talking to the daemon directly.
+- Installation instructions: `README.md` § Installation
+- Run instructions: `README.md` § Run
+- Tests or verification: `README.md` § Test or verify; `npm run verify`
+- Architecture: `README.md` § Architecture; `docs/architecture.html`; `docs/architecture.json`
+- Security and privacy notes: `README.md` § Security and privacy
+- Known limitations: `README.md` § Known limitations
 
 ## Bonus claims
 
-None claimed. Opportunistic upstream documentation or bug PRs are tracked in `PLAN.md` §7 and will be listed here only if merged before scores lock, since a claim earns nothing merely by being submitted.
+### New OpenCoven capability
 
-## Declarations
+- Claimed points: 0
+- Capability: none claimed
+- Evidence: not applicable
+- Why it did not previously exist: not applicable
+- How to demonstrate it: not applicable
 
-- **Greenfield:** all code in this repository was written during the event build window. Prior work was limited to `PLAN.md` and `PRD.md` — design notes containing no implementation.
-- **License:** unmodified MIT, only year and holder populated, no added restrictions.
-- **DCO:** every commit is signed off; AI-assisted commits carry `Co-Authored-By` trailers.
-- **Scope honesty:** token streaming, Windows, semantic memory search, hub/scheduler/travel routes, `POST /actions`, and claims are all out of scope and documented as such with reasons in the README.
-- **Attribution:** no third-party code, assets, or content are vendored. Two runtime dependencies are used unmodified via npm — [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) (MIT) for the MCP protocol layer and [`zod`](https://github.com/colinhacks/zod) (MIT) for input schemas — plus dev-only TypeScript, Vitest, and Biome. Versions are pinned in `package-lock.json`. Everything in `src/` is original.
+### Planned upstream adoption
 
-## Outstanding before freeze
+- Claimed points: 0
+- Target repository: none
+- Maintainer evidence URL: not applicable
+- Exact adoption statement or status: none claimed
 
-Tracked in full in `PLAN.md` §8; run `node scripts/freeze-preflight.mjs` to check mechanically.
+### Merged reproducible-bug PRs
 
-- Make the repository public — judges cannot clone a private repo, and the preflight fails while it is.
-- Fill the commit SHA row above after cutting the tag.
-- Optional: record a video walkthrough. Not required — `npm run demo` already satisfies the guide's demo artifact rule — but a video adds a second, lower-friction path for judges.
-- Diff `LICENSE` and this file against `participant/LICENSE_TEMPLATE.txt` and `participant/HACKATHON_TEMPLATE.md` in the (private) event repository. Both are hand-written here and match the rules text, but neither has been compared against the actual templates.
+| Repository | Issue | PR | Merge commit | Claimed band | Summary |
+|---|---|---|---|---:|---|
+| None | Not applicable | Not applicable | Not applicable | 0 | No merged bug PR bonus claimed |
+
+## License declaration
+
+- [x] The root project license is the standard MIT License.
+- [x] Only the year and copyright holder were populated.
+- [x] No restriction, rider, exception, or conflicting dual-license condition was added.
+- [x] Third-party notices are preserved.
+
+## Safety declaration
+
+- [x] No live secret, token, private key, or private credential is committed.
+- [x] No unauthorized personal data or private OpenCoven session content is published.
+- [x] The project does not contain malicious functionality.
+- [x] No security vulnerability requiring a private report was discovered; any future vulnerability will be reported privately.
+- [x] Provider usage follows applicable terms.
+
+## Final affirmation
+
+By submitting, the team confirms that the information above is accurate and that the entry complies with the Official Rules.
+
+Team representative: AJ (`@snowopsdev`)
+
+Date: August 7, 2026

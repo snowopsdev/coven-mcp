@@ -196,8 +196,7 @@ for (const r of results) {
 }
 
 console.log("\nStill requires a human (cannot be checked mechanically):");
-console.log("  - Diff LICENSE and HACKATHON.md against participant/ templates in");
-console.log("    OpenCoven/opencoven-beta-august-hackathon-2026 (private — request access)");
+console.log("  - Confirm LICENSE and HACKATHON.md still match the participant templates");
 console.log(`  - Confirm the issue form still asks for the tag "${TAG}"`);
 console.log("  - Demo link opens in a logged-out browser");
 console.log("  - Every README command re-run by hand from the clean clone");
